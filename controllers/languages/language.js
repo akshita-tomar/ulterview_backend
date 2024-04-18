@@ -68,6 +68,7 @@ exports.addLanguage = async(req,res)=>{
 
 exports.getAllLanguages = async(req,res)=>{
     try{
+      
       let languages = await languagesModel.find()
        if(languages.length<1){
         return res.status(200).json({message:"No languages added Yet!",type:'success'})

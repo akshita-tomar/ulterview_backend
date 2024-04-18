@@ -29,7 +29,6 @@ const sampleUsers = [
 
 async function seedData() {
   try {
-    
     await userModel.deleteMany();
     for (const user of sampleUsers) {
       const { email } = user;
