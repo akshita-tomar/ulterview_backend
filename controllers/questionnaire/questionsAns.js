@@ -212,13 +212,3 @@ exports.getQuestions= async(req,res)=>{
     }
 }
 
-
-
-exports.holdChange = async(req,res)=>{
-   try{
-
-   }catch(error){
-      console.log('ERROR::',error)
-      return res.status(500).json({message:"Internal Server Error",type:'error',error:error.message})
-    }
-}
