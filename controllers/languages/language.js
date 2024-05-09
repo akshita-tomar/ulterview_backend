@@ -1,4 +1,5 @@
 let languagesModel = require("../../model/languages")
+const questionnaireModel = require("../../model/questions")
 const userModel = require("../../model/user")
 
 
@@ -103,4 +104,53 @@ exports.UpdateUserLanguage= async(req,res)=>{
     console.log("ERROR::",error)
     return res.status(500).json({message:"Internal Server Error.",type:"error",error:error.message})
 }
+}
+
+
+
+exports.deleteLanguage = async(req,res)=>{
+  try{   
+      let id = req.query.languageId  
+     
+      if(!id){
+        return res.status(400).json({message:'Language Id not present',type:'error'})
+      }
+      let isLanguageExist = await languagesModel.findOne({_id:id})
+      if(!isLanguageExist){
+        return res.status(400).json({message:"Language not present.",type:'error'})
+      }
+      await languagesModel.findOneAndDelete({_id:id})
+      return res.status(200).json({message:"Language deleted successfully",type:'success'})
+  }catch(error){
+    console.log("ERROR::",error)
+    return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
+  }
+}
+
+
+exports.updateLanguage = async(req,res)=>{
+  try{
+    let languageId = req.query.languageId;
+    let updatedLanguage = req.body.language;
+    if(!languageId){
+      return res.status(400).json({message:"Language id not present in the params",type:"error"})
+    }
+    if(!updatedLanguage){
+      return res.status(400).json({message:"Please enter language",type:'error'})
+    }
+    let isLanguageExist = await languagesModel.findOne({_id:languageId})
+    if(!isLanguageExist){
+      return res.status(400).json({message:"Language not exist.",type:"error"})
+    }
+    await languagesModel.findOneAndUpdate({_id:languageId},{
+      $set:{
+        language:updatedLanguage
+      }
+    })
+    return res.status(200).json({message:"Language updated successfully!",type:"success"})
+
+  }catch(error){
+    console.log("ERROR::",error)
+    return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
+  }
 }

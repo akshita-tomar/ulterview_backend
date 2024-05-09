@@ -5,6 +5,7 @@ require('dotenv').config();
 
 let verifyToken=(req,res,next)=>{
     try{
+     
        var token = req.headers.authorization;
        if(!token){
         return res.status(400).json({message:"Unauthorized user.",type:"error"})

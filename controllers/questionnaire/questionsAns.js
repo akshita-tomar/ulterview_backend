@@ -129,6 +129,7 @@ exports.addSubjective = async(req,res)=>{
 }
 
 
+
 exports.addLogical= async(req,res)=>{
    try{
     let userId = req.result.id
@@ -203,7 +204,7 @@ exports.getQuestions= async(req,res)=>{
     if(!findLanguage){
         return res.status(400).json({message:"Not able to find language",type:'error'})
     }
-    let getMyLanguageQuestions = await questionnaireModel.find({languageId:findLanguage._id})
+    let getMyLanguageQuestions = await questionnaireModel.find({languageId:findLanguage._id,diff})
   
     return res.status(200).json({data:getMyLanguageQuestions,type:"success"})
     }catch(error){
@@ -211,4 +212,96 @@ exports.getQuestions= async(req,res)=>{
       return res.status(500).json({message:"Internal Server Error",type:'error',error:error.message})
     }
 }
+
+
+
+exports.getQuestionsSeriesWise = async (req, res) => {
+   try {
+     const userId = req.result.id;
+     const series = req.query.series;
+ 
+     if (!series) {
+       return res.status(400).json({ message: 'Series is not present', type: 'error' });
+     }
+ 
+     const isUserExist = await userModel.findOne({ _id: userId });
+     if (!isUserExist) {
+       return res.status(400).json({ message: 'User not exist.', type: 'error' });
+     }
+ 
+     const language = await languagesModel.findOne({ language: isUserExist.language });
+     if (!language) {
+       return res.status(400).json({ message: `Can't find language ${isUserExist.language}`, type: 'error' });
+     }
+ 
+     
+     const questions = await questionnaireModel.aggregate([
+       {
+         $match: { languageId: language._id } 
+       },
+       {
+         $project: {
+           subjective: {
+             $filter: {
+               input: '$subjective',
+               as: 'item',
+               cond: { $eq: ['$$item.difficultyLevel', series] }
+             }
+           },
+           objective: {
+             $filter: {
+               input: '$objective',
+               as: 'item',
+               cond: { $eq: ['$$item.difficultyLevel', series] }
+             }
+           },
+           logical: {
+             $filter: {
+               input: '$logical',
+               as: 'item',
+               cond: { $eq: ['$$item.difficultyLevel', series] }
+             }
+           }
+         }
+       }
+     ]);
+ 
+     if (
+       questions.length === 0 ||
+       (questions[0].subjective.length === 0 && questions[0].objective.length === 0 && questions[0].logical.length === 0)
+     ) {
+       return res.status(400).json({ message: `No questions found for series: ${series}` +"("+isUserExist.language+")", type: 'error' });
+     }
+ 
+     return res.status(200).json({ questions: questions[0], type: 'success' });
+   } catch (error) {
+     console.log('ERROR:', error);
+     return res.status(500).json({ message: 'Internal Server Error', type: 'error', error: error.message });
+   }
+ };
+
+
+
+  
+exports.updateQuestionAnswer = async(req,res)=>{
+    try{
+       let questionType = req.body.questionType;
+       let questionId = req.query.questionId;
+
+       if(!questionId){
+        return res.status(400).json({message:"Question id not present.",type:"error"})
+       }
+       if(!questionType){
+        return res.status(400).json({message:"Question type is not present",type:'error'})
+       }
+    
+    }catch(error){
+      console.log("ERROR::",Error)
+      return res.status(500).json({message:"Internal Server Error",type:'error',error:error.message})
+    }
+}
+
+ 
+         
+           
 
