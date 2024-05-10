@@ -1,22 +1,22 @@
 let mongoose =  require('mongoose');
 
 const questionnaireSchema = new mongoose.Schema({
-    languageId:{type:mongoose.Schema.ObjectId},
+    languageId:{type:mongoose.Types.ObjectId},
      objective: [{
      question:{type:String,default:null},
      options:{type:Array},
      correctAnswer:{type:String},
-     difficultyLevel:{type:String,enum:['easy','hard','medium']}
+     series_id:{type:mongoose.Types.ObjectId}
     }],
     subjective: [{
         question:{type:String},
         answer:{type:String},
-        difficultyLevel:{type:String,enum:['easy','hard','medium']}
+        series_id:{type:mongoose.Types.ObjectId}
     }],
     logical:[{
         question:{type:String},
         answer:{type:String},
-        difficultyLevel:{type:String,enum:['easy','hard','medium']}
+        series_id:{type:mongoose.Types.ObjectId}
     }],
 },{timestamps:true});
 

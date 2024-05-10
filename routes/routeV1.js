@@ -3,6 +3,7 @@ const router = express.Router();
 let user = require("../controllers/user/auth")
 let language = require("../controllers/languages/language")
 let questions = require("../controllers/questionnaire/questionsAns")
+let series = require('../controllers/series/series')
 let auth = require('../middleware/auth')
 
 
@@ -27,5 +28,13 @@ router.get("/getQuestions",auth,questions.getQuestions)
 router.get('/getQuestionsSeriesWise',auth,questions.getQuestionsSeriesWise)
 router.put('/updateQuestionAnswer',auth,questions.updateQuestionAnswer)
 
+
+
+//series
+router.post('/createSeries',auth,series.createSeries)
+router.put('/updateSeries',auth,series.updateSeries)
+router.delete('/deleteSeries',auth,series.deleteSeries)
+router.get('/getAllSeries',auth,series.getAllSeries)
+router.get('/getSeries',auth,series.getSeries)
 
 module.exports = router;

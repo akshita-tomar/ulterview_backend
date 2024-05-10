@@ -1,6 +1,8 @@
+let mongoose =  require('mongoose');
 let questionnaireModel = require('../../model/questions');
 const userModel = require('../../model/user');
-const languagesModel = require("../../model/languages")
+const languagesModel = require("../../model/languages");
+const seriesModel = require('../../model/series');
 
 
 
@@ -10,7 +12,7 @@ exports.addObjective = async (req, res) => {
        let question = req.body.question;
        let options = req.body.options;
        let correctAnswer = req.body.correctAnswer;
-       let difficultyLevel=  req.body.difficultyLevel
+       let seriesId=  req.query.seriesId
 
        if (!question) {
            return res.status(400).json({ message: "Please enter question.", type: 'error' });
@@ -21,8 +23,8 @@ exports.addObjective = async (req, res) => {
        if (!correctAnswer) {
            return res.status(400).json({ message: "Please enter the correct answer", type: "error" });
        }
-       if(!difficultyLevel){
-         return res.status(400).json({message:"Difficulty level is not present",type:'error'})
+       if(!seriesId){
+         return res.status(400).json({message:"seriesId is not present",type:'error'})
         }
        let isUserExist = await userModel.findOne({ _id: userId });
 
@@ -43,7 +45,7 @@ exports.addObjective = async (req, res) => {
                         question: question,
                         options: options,
                         correctAnswer: correctAnswer,
-                        difficultyLevel:difficultyLevel  
+                        series_id:seriesId  
                     }
                 }
             },
@@ -56,7 +58,7 @@ exports.addObjective = async (req, res) => {
                 question: question,
                 options: options,
                 correctAnswer: correctAnswer,
-                difficultyLevel:difficultyLevel  
+                series_id:seriesId  
             }
         };
         await questionnaireModel.create(questionnaireObj);
@@ -77,7 +79,7 @@ exports.addSubjective = async(req,res)=>{
     let userId = req.result.id
     let question = req.body.question;
     let answer= req.body.answer;
-    let difficultyLevel=  req.body.difficultyLevel
+    let seriesId=  req.query.seriesId
 
     if(!question){
         return res.status(400).json({message:"Please enter question.",type:'error'})
@@ -90,8 +92,8 @@ exports.addSubjective = async(req,res)=>{
      if(!isUserExist){
         return res.status(400).json({message:"User does not exit.",type:'error'})
      }
-     if(!difficultyLevel){
-      return res.status(400).json({message:"Difficulty level is not present",type:'error'})
+     if(!seriesId){
+      return res.status(400).json({message:"seriesId is not present",type:'error'})
      }
      let findLanguage = await languagesModel.findOne({language:isUserExist.language})
      if(!findLanguage){
@@ -104,7 +106,7 @@ exports.addSubjective = async(req,res)=>{
          subjective:{
             question:question,
             answer:answer ,
-            difficultyLevel:difficultyLevel  
+            series_id:seriesId  
          }    
       }, 
      }, { upsert: true })
@@ -114,7 +116,7 @@ exports.addSubjective = async(req,res)=>{
          subjective:{
             question:question,
             answer:answer,
-            difficultyLevel:difficultyLevel  
+            series_id:seriesId  
          }     
       }
       await questionnaireModel.create(subjectiveObj)
@@ -135,7 +137,7 @@ exports.addLogical= async(req,res)=>{
     let userId = req.result.id
     let question = req.body.question;
     let answer= req.body.answer;
-    let difficultyLevel=  req.body.difficultyLevel
+    let seriesId=  req.query.seriesId
 
     if(!question){
         return res.status(400).json({message:"Please enter question.",type:'error'})
@@ -148,8 +150,8 @@ exports.addLogical= async(req,res)=>{
      if(!isUserExist){
         return res.status(400).json({message:"User does not exit.",type:'error'})
      }
-     if(!difficultyLevel){
-      return res.status(400).json({message:"Difficulty level is not present",type:'error'})
+     if(!seriesId){
+      return res.status(400).json({message:"seriesId is not present",type:'error'})
      }
      
      let findLanguage = await languagesModel.findOne({language:isUserExist.language})
@@ -163,7 +165,7 @@ exports.addLogical= async(req,res)=>{
          logical:{
             question:question,
             answer:answer,
-            difficultyLevel:difficultyLevel    
+            series_id:seriesId    
          }    
       }, 
      }, { upsert: true })
@@ -173,7 +175,7 @@ exports.addLogical= async(req,res)=>{
          logical:{
             question:question,
             answer:answer,
-            difficultyLevel:difficultyLevel  
+            series_id:seriesId  
          }     
       }
       await questionnaireModel.create(LogicalObj)
@@ -204,7 +206,7 @@ exports.getQuestions= async(req,res)=>{
     if(!findLanguage){
         return res.status(400).json({message:"Not able to find language",type:'error'})
     }
-    let getMyLanguageQuestions = await questionnaireModel.find({languageId:findLanguage._id,diff})
+    let getMyLanguageQuestions = await questionnaireModel.find({languageId:findLanguage._id})
   
     return res.status(200).json({data:getMyLanguageQuestions,type:"success"})
     }catch(error){
@@ -218,9 +220,9 @@ exports.getQuestions= async(req,res)=>{
 exports.getQuestionsSeriesWise = async (req, res) => {
    try {
      const userId = req.result.id;
-     const series = req.query.series;
+     const seriesId = req.query.seriesId;
  
-     if (!series) {
+     if (!seriesId) {
        return res.status(400).json({ message: 'Series is not present', type: 'error' });
      }
  
@@ -233,8 +235,8 @@ exports.getQuestionsSeriesWise = async (req, res) => {
      if (!language) {
        return res.status(400).json({ message: `Can't find language ${isUserExist.language}`, type: 'error' });
      }
- 
-     
+     const series = await seriesModel.findOne({_id:seriesId})
+    
      const questions = await questionnaireModel.aggregate([
        {
          $match: { languageId: language._id } 
@@ -245,21 +247,21 @@ exports.getQuestionsSeriesWise = async (req, res) => {
              $filter: {
                input: '$subjective',
                as: 'item',
-               cond: { $eq: ['$$item.difficultyLevel', series] }
+               cond: { $eq: ['$$item.series_id', new mongoose.Types.ObjectId(seriesId)] }
              }
            },
            objective: {
              $filter: {
                input: '$objective',
                as: 'item',
-               cond: { $eq: ['$$item.difficultyLevel', series] }
+               cond: { $eq: ['$$item.series_id',new mongoose.Types.ObjectId(seriesId)] }
              }
            },
            logical: {
              $filter: {
                input: '$logical',
                as: 'item',
-               cond: { $eq: ['$$item.difficultyLevel', series] }
+               cond: { $eq: ['$$item.series_id',new mongoose.Types.ObjectId(seriesId)] }
              }
            }
          }
@@ -270,7 +272,7 @@ exports.getQuestionsSeriesWise = async (req, res) => {
        questions.length === 0 ||
        (questions[0].subjective.length === 0 && questions[0].objective.length === 0 && questions[0].logical.length === 0)
      ) {
-       return res.status(400).json({ message: `No questions found for series: ${series}` +"("+isUserExist.language+")", type: 'error' });
+       return res.status(400).json({ message: `No questions found for series: ${series.seriesName}` +"("+isUserExist.language+")", type: 'error' });
      }
  
      return res.status(200).json({ questions: questions[0], type: 'success' });
