@@ -1,4 +1,5 @@
 
+const questionnaireModel = require('../../model/questions');
 let seriesModel = require('../../model/series')
 
 
@@ -54,6 +55,16 @@ exports.deleteSeries = async(req,res)=>{
       if(!isSeriesExist){
         return res.status(400).json({message:"Series not exist",type:"error"})
       }
+      const updateOperation = {
+        $pull: {
+            subjective: { series_id: seriesId },
+            objective: { series_id: seriesId },
+            logical: { series_id: seriesId }
+        }
+    };
+    
+    // Update the document to remove the specified objects from arrays
+    await questionnaireModel.updateOne({}, updateOperation) 
       await seriesModel.findOneAndDelete({_id:seriesId})
       return res.status(200).json({message:"Selected series deleted successfully.",type:'success'})
     }catch(error){
@@ -66,7 +77,8 @@ exports.deleteSeries = async(req,res)=>{
 
 exports.getAllSeries = async(req,res)=>{
     try{
-     let allSeries = await seriesModel.find()
+     var allSeries = await seriesModel.find()
+     allSeries = allSeries.reverse()
      return res.status(200).json({allSeries,type:"success"})
     }catch(error){
         console.log('ERROR::',error)

@@ -28,6 +28,7 @@ router.post('/addLogical',auth,questions.addLogical)
 router.get("/getQuestions",auth,questions.getQuestions)
 router.get('/getQuestionsSeriesWise',auth,questions.getQuestionsSeriesWise)
 router.put('/updateQuestionAnswer',auth,questions.updateQuestionAnswer)
+router.delete('/DeleteQuestionAnswer',auth,questions.DeleteQuestionAnswer)
 
 
 
