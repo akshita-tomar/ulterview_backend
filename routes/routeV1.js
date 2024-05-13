@@ -6,7 +6,8 @@ let questions = require("../controllers/questionnaire/questionsAns")
 let series = require('../controllers/series/series')
 let auth = require('../middleware/auth')
 
-
+//test 
+router.get('/test',user.test)
 
 //developer 
 router.post('/signUp',user.signUp)

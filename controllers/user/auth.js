@@ -4,7 +4,9 @@ let bcrypt = require('bcrypt')
 let jwt = require('jsonwebtoken')
 require('dotenv').config()
 
-
+exports.test = async(req,res)=>{
+  res.send("working....")
+}
 
 exports.signUp = async(req,res)=>{
 try{
