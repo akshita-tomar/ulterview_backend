@@ -119,6 +119,7 @@ exports.deleteLanguage = async(req,res)=>{
       if(!isLanguageExist){
         return res.status(400).json({message:"Language not present.",type:'error'})
       }
+      await questionnaireModel.findOneAndDelete({languageId:isLanguageExist._id})
       await languagesModel.findOneAndDelete({_id:id})
       return res.status(200).json({message:"Language deleted successfully",type:'success'})
   }catch(error){

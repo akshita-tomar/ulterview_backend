@@ -3,6 +3,7 @@ let questionnaireModel = require('../../model/questions');
 const userModel = require('../../model/user');
 const languagesModel = require("../../model/languages");
 const seriesModel = require('../../model/series');
+// const { link } = require('../../routes/routeV1');
 
 
 
@@ -267,12 +268,12 @@ exports.getQuestionsSeriesWise = async (req, res) => {
         }
       }
     ]);
-
+   
     if (
       questions.length === 0 ||
       (questions[0].subjective.length === 0 && questions[0].objective.length === 0 && questions[0].logical.length === 0)
     ) {
-      return res.status(400).json({ message: `No questions found for series: ${series.seriesName}` + "(" + isUserExist.language + ")", type: 'error' });
+      return res.status(400).json({ message: "No questions found", type: 'error' });
     }
 
     return res.status(200).json({ questions: questions[0], type: 'success' });
@@ -408,4 +409,63 @@ exports.DeleteQuestionAnswer = async (req, res) => {
   }
 
 }
+
+
+
+exports.generateLink = async (req, res) => {
+  try {
+    let languageId = req.query.languageId
+    let seriesId = req.query.seriesId
+
+    if(!languageId){
+      return res.status(400).json({message:"Language Id missing.",type:'error'})
+    }
+    let language = await languagesModel.findOne({ _id: languageId })
+    
+    const questions = await questionnaireModel.aggregate([
+      {
+        $match: { languageId: language._id }
+      },
+      {
+        $project: {
+          subjective: {
+            $filter: {
+              input: '$subjective',
+              as: 'item',
+              cond: { $eq: ['$$item.series_id', new mongoose.Types.ObjectId(seriesId)] }
+            }
+          },
+          objective: {
+            $filter: {
+              input: '$objective',
+              as: 'item',
+              cond: { $eq: ['$$item.series_id', new mongoose.Types.ObjectId(seriesId)] }
+            }
+          },
+          logical: {
+            $filter: {
+              input: '$logical',
+              as: 'item',
+              cond: { $eq: ['$$item.series_id', new mongoose.Types.ObjectId(seriesId)] }
+            }
+          }
+        }
+      }
+    ]);
+
+    if (
+      questions.length === 0 ||
+      (questions[0].subjective.length === 0 && questions[0].objective.length === 0 && questions[0].logical.length === 0)
+    ) {
+      return res.status(400).json({ message: "No questions found", type: 'error' });
+    }
+    // const link = `${req.protocol}://${req.get('host')}/questions?languageId=${languageId}&seriesId=${seriesId}`;
+    return res.status(200).json({message:link})
+  } catch (error) {
+    console.log('ERROR::', error)
+    return res.status(500).json({ message: "Internal Server Error", type: 'error' })
+  }
+}
+
+
 

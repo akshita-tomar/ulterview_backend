@@ -29,6 +29,7 @@ router.get("/getQuestions",auth,questions.getQuestions)
 router.get('/getQuestionsSeriesWise',auth,questions.getQuestionsSeriesWise)
 router.put('/updateQuestionAnswer',auth,questions.updateQuestionAnswer)
 router.delete('/DeleteQuestionAnswer',auth,questions.DeleteQuestionAnswer)
+router.post('/generateLink',auth,questions.generateLink)
 
 
 
@@ -38,5 +39,10 @@ router.put('/updateSeries',auth,series.updateSeries)
 router.delete('/deleteSeries',auth,series.deleteSeries)
 router.get('/getAllSeries',auth,series.getAllSeries)
 router.get('/getSeries',auth,series.getSeries)
+router.get('/getAllseriesWithStatus',auth,series.getAllseriesWithStatus)
+
+
+
+
 
 module.exports = router;

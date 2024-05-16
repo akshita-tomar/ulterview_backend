@@ -82,7 +82,8 @@ exports.signIn = async(req,res)=>{
     }
     let token = jwt.sign({
      id:isEmailExist._id,
-     email:isEmailExist.email
+     email:isEmailExist.email,
+     role:isEmailExist.role
     },process.env.SECRET_KEY)
     let data = isEmailExist.toObject() 
     data.token = token;
