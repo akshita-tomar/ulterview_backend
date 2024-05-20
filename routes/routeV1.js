@@ -5,6 +5,7 @@ let language = require("../controllers/languages/language")
 let questions = require("../controllers/questionnaire/questionsAns")
 let series = require('../controllers/series/series')
 let auth = require('../middleware/auth')
+let candidate  = require('../controllers/HR/candidate')
 
 //test 
 router.get('/test',user.test)
@@ -41,7 +42,12 @@ router.get('/getAllSeries',auth,series.getAllSeries)
 router.get('/getSeries',auth,series.getSeries)
 router.get('/getAllseriesWithStatus',auth,series.getAllseriesWithStatus)
 
-
+//candidate
+router.post('/registerCandidate',auth,candidate.registerCandidate)
+router.get('/getCandidates',auth,candidate.getCandidates)
+router.get('/getSingleCandidate',auth,candidate.getSingleCandidate)
+router.delete('/deleteCandidate',auth,candidate.deleteCandidate)
+router.put('/updateCandidate',auth,candidate.updateCandidate)
 
 
 
