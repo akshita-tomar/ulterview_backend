@@ -5,7 +5,7 @@ let language = require("../controllers/languages/language")
 let questions = require("../controllers/questionnaire/questionsAns")
 let series = require('../controllers/series/series')
 let auth = require('../middleware/auth')
-let candidate  = require('../controllers/HR/candidate')
+let candidate  = require('../controllers/candidate/candidate')
 
 //test 
 router.get('/test',user.test)
@@ -50,5 +50,9 @@ router.delete('/deleteCandidate',auth,candidate.deleteCandidate)
 router.put('/updateCandidate',auth,candidate.updateCandidate)
 
 
+//interview questions
+router.get('/getInterviewQuestions',candidate.getInterviewQuestions)
+router.post('/sendInterviewLink',auth,candidate.sendInterviewLink)
+router.post('/sendLinkViaEmail',auth,candidate.sendLinkViaEmail)
 
 module.exports = router;

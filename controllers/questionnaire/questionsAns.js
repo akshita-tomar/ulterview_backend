@@ -3,6 +3,8 @@ let questionnaireModel = require('../../model/questions');
 const userModel = require('../../model/user');
 const languagesModel = require("../../model/languages");
 const seriesModel = require('../../model/series');
+const candidateModel = require('../../model/candidate');
+const interviewsModal = require('../../model/interviews')
 // const { link } = require('../../routes/routeV1');
 
 
@@ -460,12 +462,20 @@ exports.generateLink = async (req, res) => {
       return res.status(400).json({ message: "No questions found", type: 'error' });
     }
     // const link = `${req.protocol}://${req.get('host')}/questions?languageId=${languageId}&seriesId=${seriesId}`;
-    return res.status(200).json({message:link})
+    return res.status(200).json({questions})
   } catch (error) {
     console.log('ERROR::', error)
     return res.status(500).json({ message: "Internal Server Error", type: 'error' })
   }
 }
+
+
+
+
+
+
+
+
 
 
 

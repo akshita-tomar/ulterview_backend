@@ -6,7 +6,8 @@ let candidateSchema = new mongoose.Schema({
     profile:{type:String,default:null},
     resultStatus:{type:String,enum:['selected','rejected','pending'],default:'pending'},
     testStatus:{type:String,enum:['invite_sent','invite_accepted','completed','pending'],default:'pending'},
-    languageId:{type:mongoose.Types.ObjectId}
+    languageId:{type:mongoose.Types.ObjectId},
+    seriesId:{type:mongoose.Types.ObjectId},
 },{timestamps:true})
 let candidateModel = mongoose.model('candidate',candidateSchema)
 module.exports = candidateModel;

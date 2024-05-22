@@ -1,5 +1,11 @@
 let candidateModel = require('../../model/candidate');
 const languagesModel = require('../../model/languages');
+const seriesModel = require('../../model/series')
+const questionnaireModel = require("../../model/questions")
+const interviewsModal = require("../../model/interviews")
+const mongoose = require("mongoose")
+let nodemailer = require('nodemailer')
+require('dotenv').config();
 
 
 
@@ -154,3 +160,170 @@ exports.updateCandidate = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
   }
 }
+
+
+
+
+exports.sendInterviewLink = async(req,res)=>{
+  try{
+    let seriesId = req.query.seriesId;
+    let candidateId = req.query.candidateId;
+
+    if(!candidateId){
+      return res.status(400).json({message:"Candidate Id not present.",type:'error'})
+    }
+    let isCandidateExist = await candidateModel.findOne({_id:candidateId})
+    if(!isCandidateExist){
+      return res.status(400).json({message:"Candidate doesn't exist.",type:"error"})
+    }
+    if(!seriesId){
+      return res.status(400).json({message:"Series Id not present.",type:'error'})
+    }
+    let isSeriesExist = await seriesModel.findOne({_id:seriesId})
+
+    if(!isSeriesExist){
+      return res.status(400).json({message:"Series doesn't exist.",type:"error"})
+    }
+    await candidateModel.findOneAndUpdate({_id:candidateId},{
+      seriesId:seriesId
+    })
+  
+    let languageId=isCandidateExist.languageId
+
+    if(!languageId){
+      return res.status(400).json({message:"Language Id missing.",type:'error'})
+    }
+    let language = await languagesModel.findOne({ _id: languageId })
+
+    const questions = await questionnaireModel.aggregate([
+      {
+        $match: { languageId: language._id }
+      },
+      {
+        $project: {
+          subjective: {
+            $filter: {
+              input: '$subjective',
+              as: 'item',
+              cond: { $eq: ['$$item.series_id', new mongoose.Types.ObjectId(seriesId)] }
+            }
+          },
+          objective: {
+            $filter: {
+              input: '$objective',
+              as: 'item',
+              cond: { $eq: ['$$item.series_id', new mongoose.Types.ObjectId(seriesId)] }
+            }
+          },
+          logical: {
+            $filter: {
+              input: '$logical',
+              as: 'item',
+              cond: { $eq: ['$$item.series_id', new mongoose.Types.ObjectId(seriesId)] }
+            }
+          }
+        }
+      }
+    ]);
+
+    if (
+      questions.length === 0 ||
+      (questions[0].subjective.length === 0 && questions[0].objective.length === 0 && questions[0].logical.length === 0)
+    ) {
+      return res.status(400).json({ message: "No questions found", type: 'error' });
+    }
+    let isEntryExist = await interviewsModal.findOne({candidateId:candidateId})
+  
+    if(isEntryExist){
+      await interviewsModal.findOneAndUpdate({candidateId:candidateId},{
+        $set:{
+          providedQuesAns:questions
+        }
+      })
+    }else{
+      await interviewsModal.create({candidateId:candidateId,providedQuesAns:questions})
+    }
+    await candidateModel.findOneAndUpdate({_id:candidateId},{
+      $set:{
+        testStatus:'invite_sent'
+      }
+    })
+    return res.status(200).json({message:"candidate details added successfully",type:'success'})
+  }catch(error){
+    console.log("ERROR::",error)
+    return res.status(500).json({message:"Internal Server Error.",type:'error',error:error.message})
+  }
+}
+
+
+exports.getInterviewQuestions = async(req,res)=>{
+  try{
+    let candidateId = req.query.candidateId
+    if(!candidateId){
+      return res.status(400).json({message:"Not able to get candidate Id,",type:'error'})
+    }
+    let isCandidateExist = await candidateModel.findOne({_id:candidateId})
+    if(!isCandidateExist){
+      return res.status(400).json({message:"Candidate dosen't exist.",type:'error'})
+    }
+    let candidate = await interviewsModal.findOne({candidateId:candidateId})
+    let questions = candidate.providedQuesAns
+    return res.status(200).json({questions,type:"success"})
+     
+  }catch(error){
+    console.log('ERROR::',error)
+    return res.status(500).json({message:"Internal Server Error",type:'error',error:error.message})
+  }
+}
+
+
+
+
+exports.sendLinkViaEmail = async(req,res)=>{
+ try{
+  let candidateId = req.query.candidateId
+  let link = req.body.link
+
+  if(!link){
+    return res.status(400).json({message:"Link is not present.",type:"error"})
+  }
+  if(!candidateId){
+    return res.status(400).json({message:"Candidate id not present.",type:"error"})
+  }
+  let isCandidateExist = await candidateModel.findOne({_id:candidateId})
+  if(!isCandidateExist){
+    return res.status(400).json({message:"Candidate doesn't exist.",type:"error"})
+  }
+  let email = isCandidateExist.email
+  let transporter = nodemailer.createTransport({
+    // host: "smtp.zoho.in",
+    // port: 465,                                                                                      
+    // secure: true,
+    
+    service: 'gmail',
+    auth: {
+        user: process.env.GMAIL,
+        pass: process.env.GMAIL_PASSWORD
+    }
+})
+let mailDetails = {
+    from: process.env.GMAIL,
+    to: email,
+    subject: 'Ultivic Technologies',
+    text: 'Interview link',
+    html: "<div style='padding:30px; text-align:center; color:black'> <h2> " + link + "</h2></div>"
+}
+transporter.sendMail(mailDetails,
+    (error, data) => {
+        if (error) {
+            return res.status(400).json({message:"Something went wrong",type:"error",data:error})
+        } else {
+             return res.status(200).json({message:" Interview link has been sent to " +isCandidateExist.username ,type:"success"})
+        }
+    })
+ }catch(error){
+  console.log('ERROR::',error)
+  return res.status(500).json({message:"Internal Server Error",type:'error',error:error.message})
+ }
+}
+
