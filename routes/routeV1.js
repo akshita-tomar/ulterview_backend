@@ -54,5 +54,8 @@ router.put('/updateCandidate',auth,candidate.updateCandidate)
 router.get('/getInterviewQuestions',candidate.getInterviewQuestions)
 router.post('/sendInterviewLink',auth,candidate.sendInterviewLink)
 router.post('/sendLinkViaEmail',auth,candidate.sendLinkViaEmail)
+router.post('/inviteAccepted',candidate.inviteAccepted)
+router.post('/testCompleted',candidate.testCompleted)
+router.post('/addCandidateAnswers',candidate.addCandidateAnswers)
 
 module.exports = router;
