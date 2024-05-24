@@ -6,6 +6,7 @@ let candidateSchema = new mongoose.Schema({
     profile:{type:String,default:null},
     resultStatus:{type:String,enum:['selected','rejected','pending'],default:'pending'},
     testStatus:{type:String,enum:['invite_sent','invite_accepted','completed','pending'],default:'pending'},
+    acceptRejectReason:{type:String,default:null},
     languageId:{type:mongoose.Types.ObjectId},
     seriesId:{type:mongoose.Types.ObjectId},
 },{timestamps:true})

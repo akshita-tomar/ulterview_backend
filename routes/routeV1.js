@@ -58,4 +58,9 @@ router.post('/inviteAccepted',candidate.inviteAccepted)
 router.post('/testCompleted',candidate.testCompleted)
 router.post('/addCandidateAnswers',candidate.addCandidateAnswers)
 
+
+//candidate results 
+router.get('/getCandidatebyLanguage',auth,candidate.getCandidatebyLanguage)
+router.get('/get-dev-candidate-answers',auth,candidate.getAllQuesAns)
+
 module.exports = router;

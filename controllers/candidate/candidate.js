@@ -354,6 +354,7 @@ exports.inviteAccepted = async(req,res)=>{
         testStartedAt:new Date(),
       }
     })
+    io.emit('Interview_submitted')
     return res.status(200).json({message:'Invite accepted',type:"success"})
   }catch(error){
     console.log("ERROR::",error)
@@ -405,19 +406,71 @@ exports.addCandidateAnswers= async(req,res)=>{
     if(!isCandidateExist){
       return res.status(400).json({message:"Candidate not found",type:"error"})
     }
+
     let candidateInterview = await interviewsModal.findOne({candidateId:candidateId})
     if(!candidateInterview){
       return res.status(400).json({message:"Candidate not found in interview.",type:"error"})
     }
+
     await interviewsModal.findOneAndUpdate({candidateId:candidateId},{
       $set:{
         retrivedQuesAns:quesAns
       }
     })
+    await candidateModel.findOneAndUpdate({_id:candidateId},{
+      $set:{
+        testStatus:'completed'
+      }
+    })
     io.emit('Interview_submitted')
-    return res.status(500).json({message:"Interview completed!",type:"success"})
+    return res.status(200).json({message:"Interview completed!",type:"success"})
    }catch(error){
     console.log("ERROR::",error)
     return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
    }
+}
+
+
+
+exports.getCandidatebyLanguage = async(req,res)=>{
+  try{
+  let languageId = req.query.languageId;
+  var candidates 
+  if(!languageId){
+    candidates = await candidateModel.find({testStatus:'completed'})
+  }else{
+    let isLanguageExist = await languagesModel.findOne({_id:languageId})
+    if(!isLanguageExist){
+      return res.status(400).json({message:"Language doesn't exist",type:'error'})
+    }
+    candidates = await candidateModel.find({testStatus:'completed',languageId:languageId})
+  }
+  return res.status(200).json({candidates,type:"success"})
+  }catch(error){
+    console.log("ERROR::",error)
+    return res.status(500).json({message:"Internal Server Error",type:'error',type:error.message})
+  }
+}
+
+
+
+exports.getAllQuesAns = async(req,res)=>{
+  try{
+   let candidatId = req.query.candidatId
+   if(!candidatId){
+    return res.status(400).json({message:'Candidate Id not found',type:"error"})
+   }
+   let isCandidateExist = await candidateModel.findOne({_id:candidatId})
+   if(!isCandidateExist){
+    return res.status(400).json({message:"Candidate dosen't exist",type:"error"})
+   }
+   let quesAns = await interviewsModal.findOne({candidateId:candidatId})
+   if(!quesAns){
+    return res.status(400).json({message:"No candidate found by this id in Interview",type:'error'})
+   }
+   return res.status(200).json({quesAns,type:"success"})
+  }catch(error){
+    console.log("ERROR::",error)
+    return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
+  }
 }
