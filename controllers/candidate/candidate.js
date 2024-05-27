@@ -5,7 +5,7 @@ const questionnaireModel = require("../../model/questions")
 const interviewsModal = require("../../model/interviews")
 const mongoose = require("mongoose")
 let nodemailer = require('nodemailer')
-let {io}= require('../../index')
+let { io } = require('../../index')
 require('dotenv').config();
 
 
@@ -19,7 +19,7 @@ exports.registerCandidate = async (req, res) => {
     let languageId = req.body.languageId
     let emailFormat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
-   
+
     if (!username) {
       return res.status(400).json({ message: "Please provide username.", type: "error" })
     }
@@ -27,17 +27,17 @@ exports.registerCandidate = async (req, res) => {
       return res.status(400).json({ message: "Please provide email.", type: 'error' })
     }
     if (!(emailFormat.test(email))) {
-      return res.status(400).json({message:'Please enter correct email format.',type:'error'})
+      return res.status(400).json({ message: 'Please enter correct email format.', type: 'error' })
     }
     if (!profile) {
       return res.status(400).json({ message: "Please provide profile.", type: "error" })
     }
-    if(!languageId){
-      return res.status(400).json({message:"Language Id is missing.",type:"error"})
+    if (!languageId) {
+      return res.status(400).json({ message: "Language Id is missing.", type: "error" })
     }
-    let isLanguageExist=await languagesModel.findOne({_id:languageId})
-    if(!isLanguageExist){
-      return res.status(400).json({message:"language dosen't exist with this Id.",type:"error"})
+    let isLanguageExist = await languagesModel.findOne({ _id: languageId })
+    if (!isLanguageExist) {
+      return res.status(400).json({ message: "language dosen't exist with this Id.", type: "error" })
     }
     if (!experience) {
       return res.status(400).json({ message: "Please provide experience.", type: "error" })
@@ -48,7 +48,7 @@ exports.registerCandidate = async (req, res) => {
       email: email,
       profile: profile,
       experience: experience,
-      languageId:languageId
+      languageId: languageId
     }
 
     await candidateModel.create(obj)
@@ -73,21 +73,22 @@ exports.getCandidates = async (req, res) => {
 }
 
 
-exports.getSingleCandidate=async(req,res)=>{
-try{
- let candidateId = req.query.candidateId;
- if(!candidateId){
-  return res.status(400).json({message:"Candidate id is missing.",type:'error'})
- }
- let isCandidateExist = await candidateModel.findOne({_id:candidateId})
- if(!isCandidateExist){
-  return res.status(400).json({message:"Candidate dosen't exist.",type:"error"})
- }
- return res.status(200).json({isCandidateExist,type:'success'})
-}catch(error){
-  console.log("ERROR::",error)
-  return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
-}}
+exports.getSingleCandidate = async (req, res) => {
+  try {
+    let candidateId = req.query.candidateId;
+    if (!candidateId) {
+      return res.status(400).json({ message: "Candidate id is missing.", type: 'error' })
+    }
+    let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate dosen't exist.", type: "error" })
+    }
+    return res.status(200).json({ isCandidateExist, type: 'success' })
+  } catch (error) {
+    console.log("ERROR::", error)
+    return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
+  }
+}
 
 
 exports.deleteCandidate = async (req, res) => {
@@ -112,7 +113,7 @@ exports.deleteCandidate = async (req, res) => {
 exports.updateCandidate = async (req, res) => {
   try {
     let candidateId = req.query.candidateId;
-    let { username, email, profile, experience,languageId } = req.body
+    let { username, email, profile, experience, languageId } = req.body
     let emailFormat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
     if (!candidateId) {
@@ -125,17 +126,17 @@ exports.updateCandidate = async (req, res) => {
       return res.status(400).json({ message: "Please enter candidate's email", type: 'error' })
     }
     if (!(emailFormat.test(email))) {
-      return res.status(400).json({message:'Please enter correct email format.',type:'error'})
+      return res.status(400).json({ message: 'Please enter correct email format.', type: 'error' })
     }
     if (!profile) {
       return res.status(400).json({ message: "Please enter candidate's job profile.", type: 'error' })
     }
-    if(!languageId){
-      return res.status(400).json({message:"Language Id is missing.",type:"error"})
+    if (!languageId) {
+      return res.status(400).json({ message: "Language Id is missing.", type: "error" })
     }
-    let isLanguageExist=await languagesModel.findOne({_id:languageId})
-    if(!isLanguageExist){
-      return res.status(400).json({message:"language dosen't exist with this Id.",type:"error"})
+    let isLanguageExist = await languagesModel.findOne({ _id: languageId })
+    if (!isLanguageExist) {
+      return res.status(400).json({ message: "language dosen't exist with this Id.", type: "error" })
     }
     if (!experience) {
       return res.status(400).json({ message: "Please enter candidate's exprience.", type: 'error' })
@@ -151,7 +152,7 @@ exports.updateCandidate = async (req, res) => {
         email: email,
         profile: profile,
         experience: experience,
-        languageId:languageId
+        languageId: languageId
       }
     })
     return res.status(200).json({ message: "Candidate's document updated successfully.", type: 'success' })
@@ -165,34 +166,34 @@ exports.updateCandidate = async (req, res) => {
 
 
 
-exports.sendInterviewLink = async(req,res)=>{
-  try{
+exports.sendInterviewLink = async (req, res) => {
+  try {
     let seriesId = req.query.seriesId;
     let candidateId = req.query.candidateId;
 
-    if(!candidateId){
-      return res.status(400).json({message:"Candidate Id not present.",type:'error'})
+    if (!candidateId) {
+      return res.status(400).json({ message: "Candidate Id not present.", type: 'error' })
     }
-    let isCandidateExist = await candidateModel.findOne({_id:candidateId})
-    if(!isCandidateExist){
-      return res.status(400).json({message:"Candidate doesn't exist.",type:"error"})
+    let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate doesn't exist.", type: "error" })
     }
-    if(!seriesId){
-      return res.status(400).json({message:"Series Id not present.",type:'error'})
+    if (!seriesId) {
+      return res.status(400).json({ message: "Series Id not present.", type: 'error' })
     }
-    let isSeriesExist = await seriesModel.findOne({_id:seriesId})
+    let isSeriesExist = await seriesModel.findOne({ _id: seriesId })
 
-    if(!isSeriesExist){
-      return res.status(400).json({message:"Series doesn't exist.",type:"error"})
+    if (!isSeriesExist) {
+      return res.status(400).json({ message: "Series doesn't exist.", type: "error" })
     }
-    await candidateModel.findOneAndUpdate({_id:candidateId},{
-      seriesId:seriesId
+    await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+      seriesId: seriesId
     })
-  
-    let languageId=isCandidateExist.languageId
 
-    if(!languageId){
-      return res.status(400).json({message:"Language Id missing.",type:'error'})
+    let languageId = isCandidateExist.languageId
+
+    if (!languageId) {
+      return res.status(400).json({ message: "Language Id missing.", type: 'error' })
     }
     let language = await languagesModel.findOne({ _id: languageId })
 
@@ -233,244 +234,302 @@ exports.sendInterviewLink = async(req,res)=>{
     ) {
       return res.status(400).json({ message: "No questions found", type: 'error' });
     }
-    let isEntryExist = await interviewsModal.findOne({candidateId:candidateId})
-  
-    if(isEntryExist){
-      await interviewsModal.findOneAndUpdate({candidateId:candidateId},{
-        $set:{
-          providedQuesAns:questions
+    let isEntryExist = await interviewsModal.findOne({ candidateId: candidateId })
+
+    if (isEntryExist) {
+      await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+        $set: {
+          providedQuesAns: questions
         }
       })
-    }else{
-      await interviewsModal.create({candidateId:candidateId,providedQuesAns:questions})
+    } else {
+      await interviewsModal.create({ candidateId: candidateId, providedQuesAns: questions })
     }
-    await candidateModel.findOneAndUpdate({_id:candidateId},{
-      $set:{
-        testStatus:'invite_sent'
+    await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+      $set: {
+        testStatus: 'invite_sent'
       }
     })
-    return res.status(200).json({message:"candidate details added successfully",type:'success'})
-  }catch(error){
-    console.log("ERROR::",error)
-    return res.status(500).json({message:"Internal Server Error.",type:'error',error:error.message})
+    return res.status(200).json({ message: "candidate details added successfully", type: 'success' })
+  } catch (error) {
+    console.log("ERROR::", error)
+    return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message })
   }
 }
 
 
-exports.getInterviewQuestions = async(req,res)=>{
-  try{
+exports.getInterviewQuestions = async (req, res) => {
+  try {
     let candidateId = req.query.candidateId
-    if(!candidateId){
-      return res.status(400).json({message:"Not able to get candidate Id,",type:'error'})
+    if (!candidateId) {
+      return res.status(400).json({ message: "Not able to get candidate Id,", type: 'error' })
     }
-    let isCandidateExist = await candidateModel.findOne({_id:candidateId})
-    if(!isCandidateExist){
-      return res.status(400).json({message:"Candidate dosen't exist.",type:'error'})
+    let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate dosen't exist.", type: 'error' })
     }
-    let series = await seriesModel.findOne({_id:isCandidateExist.seriesId})
+    let series = await seriesModel.findOne({ _id: isCandidateExist.seriesId })
     let time = series.taskTime
-    let candidate = await interviewsModal.findOne({candidateId:candidateId})
+    let candidate = await interviewsModal.findOne({ candidateId: candidateId })
     let questions = candidate.providedQuesAns
     let completedStatus = isCandidateExist.testStatus
-    return res.status(200).json({time,completedStatus,questions,type:"success"})
-     
-  }catch(error){
-    console.log('ERROR::',error)
-    return res.status(500).json({message:"Internal Server Error",type:'error',error:error.message})
+    return res.status(200).json({ time, completedStatus, questions, type: "success" })
+
+  } catch (error) {
+    console.log('ERROR::', error)
+    return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
   }
 }
 
 
 
 
-exports.sendLinkViaEmail = async(req,res)=>{
- try{
-  let candidateId = req.query.candidateId
-  let link = req.body.link
+exports.sendLinkViaEmail = async (req, res) => {
+  try {
+    let candidateId = req.query.candidateId
+    let link = req.body.link
 
-  if(!link){
-    return res.status(400).json({message:"Link is not present.",type:"error"})
-  }
-  if(!candidateId){
-    return res.status(400).json({message:"Candidate id not present.",type:"error"})
-  }
-  let isCandidateExist = await candidateModel.findOne({_id:candidateId})
-  if(!isCandidateExist){
-    return res.status(400).json({message:"Candidate doesn't exist.",type:"error"})
-  }
-  let email = isCandidateExist.email
-  let transporter = nodemailer.createTransport({
-    // host: "smtp.zoho.in",
-    // port: 465,                                                                                      
-    // secure: true,
-    
-    service: 'gmail',
-    auth: {
+    if (!link) {
+      return res.status(400).json({ message: "Link is not present.", type: "error" })
+    }
+    if (!candidateId) {
+      return res.status(400).json({ message: "Candidate id not present.", type: "error" })
+    }
+    let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate doesn't exist.", type: "error" })
+    }
+    let email = isCandidateExist.email
+    let transporter = nodemailer.createTransport({
+      // host: "smtp.zoho.in",
+      // port: 465,                                                                                      
+      // secure: true,
+
+      service: 'gmail',
+      auth: {
         user: process.env.GMAIL,
         pass: process.env.GMAIL_PASSWORD
-    }
-})
-let mailDetails = {
-    from: process.env.GMAIL,
-    to: email,
-    subject: 'Ultivic Technologies',
-    text: 'Interview link',
-    html: "<div style='padding:30px; text-align:center; color:black'> <h2> " + link + "</h2></div>"
-}
-transporter.sendMail(mailDetails,
-    (error, data) => {
-        if (error) {
-            return res.status(400).json({message:"Something went wrong",type:"error",data:error})
-        } else {
-             return res.status(200).json({message:" Interview link has been sent to " +isCandidateExist.username ,type:"success"})
-        }
-    })
- }catch(error){
-  console.log('ERROR::',error)
-  return res.status(500).json({message:"Internal Server Error",type:'error',error:error.message})
- }
-}
-
-
-
-
-exports.inviteAccepted = async(req,res)=>{
-  try{
-    let candidateId = req.body.candidateId;
-    if(!candidateId){
-      return res.status(400).json({message:"Candidate Id not found.",type:"error"})
-    }
-    let isCandidateExist = await candidateModel.findOne({_id:candidateId})
-    if(!isCandidateExist){
-      return res.status(400).json({message:"Candidate not found.",type:"error"})
-    }
-    await candidateModel.findOneAndUpdate({_id:candidateId},{
-      $set:{
-        testStatus:'invite_accepted'
       }
     })
-    await interviewsModal.findOneAndUpdate({candidateId:candidateId},{
-      $set:{
-        testStartedAt:new Date(),
+    let mailDetails = {
+      from: process.env.GMAIL,
+      to: email,
+      subject: 'Ultivic Technologies',
+      text: 'Interview link',
+      html: "<div style='padding:30px; text-align:center; color:black'> <h2> " + link + "</h2></div>"
+    }
+    transporter.sendMail(mailDetails,
+      (error, data) => {
+        if (error) {
+          return res.status(400).json({ message: "Something went wrong", type: "error", data: error })
+        } else {
+          return res.status(200).json({ message: " Interview link has been sent to " + isCandidateExist.username, type: "success" })
+        }
+      })
+  } catch (error) {
+    console.log('ERROR::', error)
+    return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
+  }
+}
+
+
+
+
+exports.inviteAccepted = async (req, res) => {
+  try {
+    let candidateId = req.body.candidateId;
+    if (!candidateId) {
+      return res.status(400).json({ message: "Candidate Id not found.", type: "error" })
+    }
+    let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate not found.", type: "error" })
+    }
+    await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+      $set: {
+        testStatus: 'invite_accepted'
+      }
+    })
+    await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+      $set: {
+        testStartedAt: new Date(),
       }
     })
     io.emit('Interview_submitted')
-    return res.status(200).json({message:'Invite accepted',type:"success"})
-  }catch(error){
-    console.log("ERROR::",error)
-    return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
+    return res.status(200).json({ message: 'Invite accepted', type: "success" })
+  } catch (error) {
+    console.log("ERROR::", error)
+    return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
   }
 }
 
 
 
-exports.testCompleted = async(req,res)=>{
-  try{
-    let candidateId = req.body.candidateId; 
-    if(!candidateId){
-      return res.status(400).json({message:"Candidate Id not found.",type:"error"})
+exports.testCompleted = async (req, res) => {
+  try {
+    let candidateId = req.body.candidateId;
+    if (!candidateId) {
+      return res.status(400).json({ message: "Candidate Id not found.", type: "error" })
     }
-    let isCandidateExist = await candidateModel.findOne({_id:candidateId})
-    if(!isCandidateExist){
-      return res.status(400).json({message:"Candidate not found.",type:"error"})
+    let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate not found.", type: "error" })
     }
-    await candidateModel.findOneAndUpdate({_id:candidateId},{
-      $set:{
-        testStatus:'completed'
+    await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+      $set: {
+        testStatus: 'completed'
       }
     })
-    await interviewsModal.findOneAndUpdate({candidateId:candidateId},{
-      $set:{
-        testEndedAt:new Date()
+    await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+      $set: {
+        testEndedAt: new Date()
       }
     })
-    return res.status(200).json({message:'Test Completed',type:"success"})
-  }catch(error){
-    console.log("ERROR::",error)
-    return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
+    return res.status(200).json({ message: 'Test Completed', type: "success" })
+  } catch (error) {
+    console.log("ERROR::", error)
+    return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
   }
 }
 
 
-exports.addCandidateAnswers= async(req,res)=>{
-   try{
+exports.addCandidateAnswers = async (req, res) => {
+  try {
     let candidateId = req.body.candidateId;
     let quesAns = req.body.quesAns;
-    if(!candidateId){
-      return res.status(400).json({message:"Candidate Id not present!",type:"error"})
+    if (!candidateId) {
+      return res.status(400).json({ message: "Candidate Id not present!", type: "error" })
     }
-    if(!quesAns){
-      return res.status(400).json({message:"Please enter answers.",type:"error"})
+    if (!quesAns) {
+      return res.status(400).json({ message: "Please enter answers.", type: "error" })
     }
-    let isCandidateExist = await candidateModel.findOne({_id:candidateId})
-    if(!isCandidateExist){
-      return res.status(400).json({message:"Candidate not found",type:"error"})
-    }
-
-    let candidateInterview = await interviewsModal.findOne({candidateId:candidateId})
-    if(!candidateInterview){
-      return res.status(400).json({message:"Candidate not found in interview.",type:"error"})
+    let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate not found", type: "error" })
     }
 
-    await interviewsModal.findOneAndUpdate({candidateId:candidateId},{
-      $set:{
-        retrivedQuesAns:quesAns
+    let candidateInterview = await interviewsModal.findOne({ candidateId: candidateId })
+    if (!candidateInterview) {
+      return res.status(400).json({ message: "Candidate not found in interview.", type: "error" })
+    }
+
+    await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+      $set: {
+        retrivedQuesAns: quesAns
       }
     })
-    await candidateModel.findOneAndUpdate({_id:candidateId},{
-      $set:{
-        testStatus:'completed'
+    await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+      $set: {
+        testStatus: 'completed'
       }
     })
     io.emit('Interview_submitted')
-    return res.status(200).json({message:"Interview completed!",type:"success"})
-   }catch(error){
-    console.log("ERROR::",error)
-    return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
-   }
+    io.emit('interview_result_submitted')
+    return res.status(200).json({ message: "Interview completed!", type: "success" })
+  } catch (error) {
+    console.log("ERROR::", error)
+    return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
+  }
 }
 
 
 
-exports.getCandidatebyLanguage = async(req,res)=>{
-  try{
-  let languageId = req.query.languageId;
-  var candidates 
-  if(!languageId){
-    candidates = await candidateModel.find({testStatus:'completed'})
-  }else{
-    let isLanguageExist = await languagesModel.findOne({_id:languageId})
-    if(!isLanguageExist){
-      return res.status(400).json({message:"Language doesn't exist",type:'error'})
+exports.getCandidatebyLanguage = async (req, res) => {
+  try {
+    let languageId = req.query.languageId;
+    var candidates
+    if (!languageId) {
+      candidates = await candidateModel.find({ testStatus: 'completed' })
+    } else {
+      let isLanguageExist = await languagesModel.findOne({ _id: languageId })
+      if (!isLanguageExist) {
+        return res.status(400).json({ message: "Language doesn't exist", type: 'error' })
+      }
+      candidates = await candidateModel.find({ testStatus: 'completed', languageId: languageId })
     }
-    candidates = await candidateModel.find({testStatus:'completed',languageId:languageId})
-  }
-  return res.status(200).json({candidates,type:"success"})
-  }catch(error){
-    console.log("ERROR::",error)
-    return res.status(500).json({message:"Internal Server Error",type:'error',type:error.message})
+    return res.status(200).json({ candidates, type: "success" })
+  } catch (error) {
+    console.log("ERROR::", error)
+    return res.status(500).json({ message: "Internal Server Error", type: 'error', type: error.message })
   }
 }
 
 
 
-exports.getAllQuesAns = async(req,res)=>{
-  try{
-   let candidatId = req.query.candidatId
-   if(!candidatId){
-    return res.status(400).json({message:'Candidate Id not found',type:"error"})
-   }
-   let isCandidateExist = await candidateModel.findOne({_id:candidatId})
-   if(!isCandidateExist){
-    return res.status(400).json({message:"Candidate dosen't exist",type:"error"})
-   }
-   let quesAns = await interviewsModal.findOne({candidateId:candidatId})
-   if(!quesAns){
-    return res.status(400).json({message:"No candidate found by this id in Interview",type:'error'})
-   }
-   return res.status(200).json({quesAns,type:"success"})
-  }catch(error){
-    console.log("ERROR::",error)
-    return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
+exports.getAllQuesAns = async (req, res) => {
+  try {
+    let candidatId = req.query.candidatId
+    if (!candidatId) {
+      return res.status(400).json({ message: 'Candidate Id not found', type: "error" })
+    }
+    let isCandidateExist = await candidateModel.findOne({ _id: candidatId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate dosen't exist", type: "error" })
+    }
+    let quesAns = await interviewsModal.findOne({ candidateId: candidatId })
+    if (!quesAns) {
+      return res.status(400).json({ message: "No candidate found by this id in Interview", type: 'error' })
+    }
+    return res.status(200).json({ quesAns, type: "success" })
+  } catch (error) {
+    console.log("ERROR::", error)
+    return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
+  }
+}
+
+
+exports.addCheckedSheet = async (req, res) => {
+  try {
+    let candidateId = req.body.candidateId
+    let totalQuestions = req.body.totalQuestions;
+    let totalCorrectQuestions = req.body.totalCorrectQuestions;
+    let checkedAnswerSheet = req.body.checkedAnswerSheet;
+    if (!candidateId) {
+      return res.status(400).json({ message: "Candidate Id not present", type: 'error' })
+    }
+    if (!totalQuestions) {
+      return res.status(400).json({ message: "Total questions not present", type: "error" })
+    }
+    if (!totalCorrectQuestions) {
+      return res.status(400).json({ message: "Correct answer not present", type: "error" })
+    }
+    if (!checkedAnswerSheet) {
+      return res.status(400).json({ message: "Checked answersheet not present.", type: "error" })
+    }
+    let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate not exist", type: 'error' })
+    }
+    let isCandidateInterviewExist = await interviewsModal.findOne({ candidateId: candidateId })
+    if (!isCandidateInterviewExist) {
+      return res.status(400).json({ message: "Candidate interview not exist.", type: 'error' })
+    }
+    let testStatus = (totalCorrectQuestions / totalQuestions) * 100
+    console.log("test status ------",testStatus)
+    let passedOrFailed
+    if (testStatus < 60) {
+      passedOrFailed = "rejected"
+    } else {
+      passedOrFailed = "selected"
+    }
+    console.log("passed or failed----",passedOrFailed)
+    await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+      $set: {
+        totalQuestion: totalQuestions,
+        totalCorrectQuestions: totalCorrectQuestions,
+        checkedAnswerSheet: checkedAnswerSheet
+      }
+    })
+    await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+      $set: {
+        resultStatus: passedOrFailed
+      }
+    })
+    io.emit('Interview_submitted')
+    io.emit('interview_result_submitted')
+    return res.status(200).json({ message: "Answer sheet marked checked.", type: "success" })
+  } catch (error) {
+    console.log("ERROR::", error)
+    return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
   }
 }

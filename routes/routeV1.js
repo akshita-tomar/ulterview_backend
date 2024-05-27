@@ -62,5 +62,6 @@ router.post('/addCandidateAnswers',candidate.addCandidateAnswers)
 //candidate results 
 router.get('/getCandidatebyLanguage',auth,candidate.getCandidatebyLanguage)
 router.get('/get-dev-candidate-answers',auth,candidate.getAllQuesAns)
+router.post('/addCheckedSheet',auth,candidate.addCheckedSheet)
 
 module.exports = router;
