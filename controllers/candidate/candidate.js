@@ -5,6 +5,7 @@ const questionnaireModel = require("../../model/questions")
 const interviewsModal = require("../../model/interviews")
 const mongoose = require("mongoose")
 let nodemailer = require('nodemailer')
+let userModel = require('../../model/user')
 let { io } = require('../../index')
 require('dotenv').config();
 
@@ -250,6 +251,7 @@ exports.sendInterviewLink = async (req, res) => {
         testStatus: 'invite_sent'
       }
     })
+    io.emit('interview_result_submitted')
     return res.status(200).json({ message: "candidate details added successfully", type: 'success' })
   } catch (error) {
     console.log("ERROR::", error)
@@ -335,6 +337,35 @@ exports.sendLinkViaEmail = async (req, res) => {
 
 
 
+exports.handleResendLink = async (req,res)=>{
+  try{
+   let candidateId = req.body.candidateId;
+   if(!candidateId){
+    return res.status(400).json({message:"Candidate Id not present.",type:'error'})
+   }
+   let isCandidateExist = await candidateModel.findOne({_id:candidateId})
+   if(!isCandidateExist){
+    return res.status(400).json({message:"Candidate doesn't exist.", type:'error'})
+   }
+   let checkCandidateInterview = await interviewsModal.findOne({candidateId:candidateId})
+   if(!checkCandidateInterview){
+    return res.status(400).json({message:"Interview doesn't exist with this cadidate",type:"error"})
+   }
+
+
+   await candidateModel.findOneAndUpdate({_id:candidateId},{
+    resultStatus:'pending',
+    testStatus:'pending'
+   })
+   io.emit('interview_result_submitted')  
+   return res.status(200).json({message:"State updated successfully.",type:'success'})
+  }catch (error) {
+    console.log('ERROR::', error)
+    return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
+  }
+}
+
+
 exports.inviteAccepted = async (req, res) => {
   try {
     let candidateId = req.body.candidateId;
@@ -397,12 +428,17 @@ exports.addCandidateAnswers = async (req, res) => {
   try {
     let candidateId = req.body.candidateId;
     let quesAns = req.body.quesAns;
+    let endTime = req.body.endTime
+
+
     if (!candidateId) {
       return res.status(400).json({ message: "Candidate Id not present!", type: "error" })
     }
     if (!quesAns) {
       return res.status(400).json({ message: "Please enter answers.", type: "error" })
     }
+    let checkSubmittedAnsLength = quesAns.objective.length + quesAns.subjective.length + quesAns.logical.length
+
     let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
     if (!isCandidateExist) {
       return res.status(400).json({ message: "Candidate not found", type: "error" })
@@ -415,14 +451,27 @@ exports.addCandidateAnswers = async (req, res) => {
 
     await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
       $set: {
-        retrivedQuesAns: quesAns
+        retrivedQuesAns: quesAns,
+        testEndedAt :endTime
       }
     })
-    await candidateModel.findOneAndUpdate({ _id: candidateId }, {
-      $set: {
-        testStatus: 'completed'
-      }
-    })
+    console.log('lenth ----',checkSubmittedAnsLength)
+    if (checkSubmittedAnsLength < 1) {
+      await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+        $set: {
+          testStatus: 'completed',
+          resultStatus: 'rejected'
+        }
+      })
+    } else {
+      await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+        $set: {
+          testStatus: 'completed',
+          resultStatus:'pending'
+        }
+      })
+    }
+
     io.emit('Interview_submitted')
     io.emit('interview_result_submitted')
     return res.status(200).json({ message: "Interview completed!", type: "success" })
@@ -439,7 +488,7 @@ exports.getCandidatebyLanguage = async (req, res) => {
     let languageId = req.query.languageId;
     var candidates
     if (!languageId) {
-      candidates = await candidateModel.find({ testStatus: 'completed' })
+      candidates = await candidateModel.find({ testStatus: 'completed' }).sort({updatedAt: -1})
     } else {
       let isLanguageExist = await languagesModel.findOne({ _id: languageId })
       if (!isLanguageExist) {
@@ -447,6 +496,7 @@ exports.getCandidatebyLanguage = async (req, res) => {
       }
       candidates = await candidateModel.find({ testStatus: 'completed', languageId: languageId })
     }
+    // candidates.reverse()
     return res.status(200).json({ candidates, type: "success" })
   } catch (error) {
     console.log("ERROR::", error)
@@ -484,18 +534,21 @@ exports.addCheckedSheet = async (req, res) => {
     let totalQuestions = req.body.totalQuestions;
     let totalCorrectQuestions = req.body.totalCorrectQuestions;
     let checkedAnswerSheet = req.body.checkedAnswerSheet;
+    let checkedBy = req.result.id
+console.log("correct ans----",totalCorrectQuestions)
     if (!candidateId) {
       return res.status(400).json({ message: "Candidate Id not present", type: 'error' })
     }
     if (!totalQuestions) {
       return res.status(400).json({ message: "Total questions not present", type: "error" })
     }
-    if (!totalCorrectQuestions) {
+    if (!totalCorrectQuestions===undefined || totalCorrectQuestions===null) {
       return res.status(400).json({ message: "Correct answer not present", type: "error" })
     }
     if (!checkedAnswerSheet) {
       return res.status(400).json({ message: "Checked answersheet not present.", type: "error" })
     }
+    let developer = await userModel.findOne({_id:checkedBy})
     let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
     if (!isCandidateExist) {
       return res.status(400).json({ message: "Candidate not exist", type: 'error' })
@@ -505,19 +558,20 @@ exports.addCheckedSheet = async (req, res) => {
       return res.status(400).json({ message: "Candidate interview not exist.", type: 'error' })
     }
     let testStatus = (totalCorrectQuestions / totalQuestions) * 100
-    console.log("test status ------",testStatus)
+    
     let passedOrFailed
     if (testStatus < 60) {
       passedOrFailed = "rejected"
     } else {
       passedOrFailed = "selected"
     }
-    console.log("passed or failed----",passedOrFailed)
+    
     await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
       $set: {
         totalQuestion: totalQuestions,
         totalCorrectQuestions: totalCorrectQuestions,
-        checkedAnswerSheet: checkedAnswerSheet
+        checkedAnswerSheet: checkedAnswerSheet,
+        checkedBy:developer.userName
       }
     })
     await candidateModel.findOneAndUpdate({ _id: candidateId }, {
@@ -533,3 +587,6 @@ exports.addCheckedSheet = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
   }
 }
+
+
+
