@@ -156,16 +156,7 @@ exports.getAllSeries = async (req, res) => {
     }
 }
 
-// exports.getAllSeries = async(req,res)=>{
-//     try{
-//      var allSeries = await seriesModel.find()
-//      allSeries = allSeries.reverse()
-//      return res.status(200).json({allSeries,type:"success"})
-//     }catch(error){
-//         console.log('ERROR::',error)
-//         return res.status(500).json({message:"Internal server Error",type:'error',error:error.message})
-//     }
-// }
+
 
 exports.getSeries = async (req, res) => {
     try {

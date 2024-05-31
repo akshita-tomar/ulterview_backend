@@ -6,6 +6,7 @@ let questions = require("../controllers/questionnaire/questionsAns")
 let series = require('../controllers/series/series')
 let auth = require('../middleware/auth')
 let candidate  = require('../controllers/candidate/candidate')
+let HR = require('../controllers/HR/HrRound')
 
 //test 
 router.get('/test',user.test)
@@ -65,5 +66,15 @@ router.get('/getCandidatebyLanguage',auth,candidate.getCandidatebyLanguage)
 router.get('/get-dev-candidate-answers',auth,candidate.getAllQuesAns)
 router.post('/addCheckedSheet',auth,candidate.addCheckedSheet)
 // router.get('/get-checked-sheet',auth,candidate.getCheckedSheet)
+
+
+// HR round 
+router.post("/addQuestionSeries",auth,HR.addQuestionSeries)
+router.post("/addQuestion",auth,HR.addQuestion)
+router.put("/updateQuesiton",auth,HR.updateQuesiton)
+router.post('/sendHrRoundQuesAns',auth,HR.sendHrRoundQuesAns)
+
+
+
 
 module.exports = router;

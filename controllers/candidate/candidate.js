@@ -274,8 +274,9 @@ exports.getInterviewQuestions = async (req, res) => {
     let time = series.taskTime
     let candidate = await interviewsModal.findOne({ candidateId: candidateId })
     let questions = candidate.providedQuesAns
+    let linkClickedCount = candidate.linkClickedCount
     let completedStatus = isCandidateExist.testStatus
-    return res.status(200).json({ time, completedStatus, questions, type: "success" })
+    return res.status(200).json({ time, completedStatus, questions,linkClickedCount, type: "success" })
 
   } catch (error) {
     console.log('ERROR::', error)
@@ -381,13 +382,18 @@ exports.inviteAccepted = async (req, res) => {
         testStatus: 'invite_accepted'
       }
     })
-    await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+    let interview = await interviewsModal.findOne({candidateId: candidateId})
+    console.log(interview.linkClickedCount)
+     await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
       $set: {
         testStartedAt: new Date(),
+        linkClickedCount:interview.linkClickedCount + 1
       }
     })
+    let updatedInterview = await interviewsModal.findOne({candidateId: candidateId})
+    let linkClickedCount = updatedInterview.linkClickedCount
     io.emit('Interview_submitted')
-    return res.status(200).json({ message: 'Invite accepted', type: "success" })
+    return res.status(200).json({ message: 'Invite accepted',linkClickedCount, type: "success" })
   } catch (error) {
     console.log("ERROR::", error)
     return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
@@ -452,15 +458,23 @@ exports.addCandidateAnswers = async (req, res) => {
     await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
       $set: {
         retrivedQuesAns: quesAns,
-        testEndedAt :endTime
+        testEndedAt :endTime,
+        linkClickedCount:0
       }
     })
-    console.log('lenth ----',checkSubmittedAnsLength)
+    
     if (checkSubmittedAnsLength < 1) {
       await candidateModel.findOneAndUpdate({ _id: candidateId }, {
         $set: {
           testStatus: 'completed',
           resultStatus: 'rejected'
+        }
+      })
+      await interviewsModal.findOneAndUpdate({candidateId: candidateId },{
+        $set:{
+          checkedBy:null,
+          totalCorrectQuestions:0,
+          checkedAnswerSheet:null
         }
       })
     } else {
@@ -478,8 +492,7 @@ exports.addCandidateAnswers = async (req, res) => {
   } catch (error) {
     console.log("ERROR::", error)
     return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
-  }
-}
+  }}
 
 
 

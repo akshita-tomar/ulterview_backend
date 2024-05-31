@@ -10,7 +10,9 @@ let interviewSchema = new mongoose.Schema({
     totalQuestion:{type:Number,default:0},
     totalCorrectQuestions:{type:Number,default:0},
     checkedAnswerSheet:{type:Object,default:null},
-    checkedBy:{type:String,default:null}
+    checkedBy:{type:String,default:null},
+    linkClickedCount:{type:Number,default:0},
+    hrRoundQuesAns:{type:Object,default:null}
 },{timestamps:true})
 
 let interviewsModal = mongoose.model('Interview',interviewSchema)
