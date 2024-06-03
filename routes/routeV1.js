@@ -11,9 +11,16 @@ let HR = require('../controllers/HR/HrRound')
 //test 
 router.get('/test',user.test)
 
-//developer 
-router.post('/signUp',user.signUp)
+//auth 
+router.post('/signUp',auth,user.signUp)
 router.post('/signIn',user.signIn)
+
+
+//developer and HR 
+router.get('/get-HR-or-Developer-Details',auth,user.getHRorDeveloperDetails)
+router.delete('/deleteUser',auth,user.deleteUser)
+router.put("/editUserDetails",auth,user.editUserDetails)
+router.put('/changePassword',auth,user.changePassword)
 
 //language
 router.post('/selectLanguage',auth,language.selectLanguage)

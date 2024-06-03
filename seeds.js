@@ -11,12 +11,15 @@ const sampleUsers = [
     email: 'developer1@gmail.com',
     password: 'developer1234',
     role: 'DEVELOPER',
+    profile:'node.js developer',
+    experience:'2 years'
   },
   {
     userName: 'hr',
     email: 'hr@gmail.com',
     password: 'hr1234',
     role: 'HR',
+    experience:'3 years'
   },
   {
     userName: 'admin',
