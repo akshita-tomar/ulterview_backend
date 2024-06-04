@@ -55,6 +55,7 @@ exports.deleteHrRoundSeries= async(req,res)=>{
     }
 }
 
+
 exports.updateHrRoundSeries=async(req,res)=>{
     try{
       let seriesId = req.body.seriesId
@@ -80,6 +81,7 @@ exports.updateHrRoundSeries=async(req,res)=>{
         return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
     }
 }
+
 
 exports.addQuestion = async (req, res) => {
     try {
