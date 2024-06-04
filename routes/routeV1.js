@@ -77,6 +77,9 @@ router.post('/addCheckedSheet',auth,candidate.addCheckedSheet)
 
 // HR round 
 router.post("/addQuestionSeries",auth,HR.addQuestionSeries)
+router.get('/getHrRoundSeries',auth,HR.getHrRoundSeries)
+router.delete('/deleteHrRoundSeries',auth,HR.deleteHrRoundSeries)
+router.put('/updateHrRoundSeries',auth,HR.updateHrRoundSeries)
 router.post("/addQuestion",auth,HR.addQuestion)
 router.put("/updateQuesiton",auth,HR.updateQuesiton)
 router.post('/sendHrRoundQuesAns',auth,HR.sendHrRoundQuesAns)

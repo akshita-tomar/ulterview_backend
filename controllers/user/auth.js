@@ -143,7 +143,7 @@ exports.signIn = async (req, res) => {
 exports.getHRorDeveloperDetails = async (req, res) => {
   try {
     var role = req.query.role;
-    let selectedKeys = ['userName', 'email', 'profile', 'experience']
+    let selectedKeys = ['userName', 'email', 'profile', 'experience',"role"]
     if (!role) {
       return res.status(400).json({ message: "Role not present.", type: "error" })
     }
@@ -183,24 +183,24 @@ exports.deleteUser = async (req, res) => {
 exports.editUserDetails = async (req, res) => {
   try {
     let userId = req.body.userId;
-    let userName = req.body.userName;
-    let email = req.body.email;
+    let username = req.body.username;
     let profile = req.body.profile;
     let experience = req.body.experience
 
     if (!userId) {
       return res.status(400).json({ message: "UserId not found.", type: 'error' })
     }
-    if (!userName) {
+    if (!username) {
       return res.status(400).json({ message: "Please enter username", type: "error" })
-    }
-    if (!email) {
-      return res.status(400).json({ message: "Please enter email", type: 'error' })
     }
     let isUserExist = await userModel.findOne({ _id: userId })
     if (!isUserExist) {
       return res.status(400).json({ message: "User data not found.", type: "error" })
     }
+    if (!experience) {
+      return res.status(400).json({ message: "Please enter experience.", type: 'error' })
+    }
+
     if (isUserExist.role === 'DEVELOPER') {
       if (!profile) {
         return res.status(400).json({ message: "Please enter profile.", type: "error" })
@@ -208,14 +208,12 @@ exports.editUserDetails = async (req, res) => {
     }
     await userModel.findOneAndUpdate({ _id: userId }, {
       $set: {
-        userName: userName,
-        email: email,
-        password: password,
+        userName: username,
         profile: profile,
         experience: experience
       }
     })
-    return res.status(200).json({ message: "Document updated successfully.", type: "error" })
+    return res.status(200).json({ message: "Document updated successfully.", type: "success" })
   } catch (error) {
     console.log("ERROR::", error)
     return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
