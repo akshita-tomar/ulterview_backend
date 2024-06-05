@@ -4,6 +4,7 @@ let nodemailer = require('nodemailer')
 let HrQuestionsModel = require('../../model/hrQuestions')
 let hrQuestionsSeriesModel = require("../../model/hrQuestionSeries")
 
+
 require('dotenv').config()
 
 
@@ -19,66 +20,66 @@ exports.addQuestionSeries = async (req, res) => {
         return res.status(200).json({ message: "Question series added successfully", type: 'success' })
     } catch (error) {
         console.log("ERROR::", error)
-        return res.status(500).json({ message: "Internal Server Error", type: "error",error:error.message})
+        return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
     }
 }
 
 
-exports.getHrRoundSeries=async(req,res)=>{
- try{
-  let allSeries = await hrQuestionsSeriesModel.find()
-  return res.status(200).json({allSeries,type:"success"})
- }catch(error){
-    console.log("ERROR::",error)
-    return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
- }
-}
-
-
-exports.deleteHrRoundSeries= async(req,res)=>{
-    try{
-     let SeriesId = req.body.SeriesId;
-     if(!SeriesId){
-        return res.status(400).json({message:"Series Id not present.",type:"error"})
-     }
-     let isSeriesExist = await hrQuestionsSeriesModel.findOne({_id:SeriesId})
-     if(!isSeriesExist){
-        return res.status(400).json({message:"Series doesn't exist with this id",type:"error"})
-     }
-     await HrQuestionsModel.findOneAndDelete({questionSeriesId:SeriesId})
-     await hrQuestionsSeriesModel.findOneAndDelete({_id:SeriesId})
-
-     return res.status(200).json({message: isSeriesExist.questionSeries +" series deleted successfully",type:"success"})
-    }catch(error){
-        console.log("ERROR::",error)
-        return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
+exports.getHrRoundSeries = async (req, res) => {
+    try {
+        let allSeries = await hrQuestionsSeriesModel.find()
+        return res.status(200).json({ allSeries, type: "success" })
+    } catch (error) {
+        console.log("ERROR::", error)
+        return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
     }
 }
 
 
-exports.updateHrRoundSeries=async(req,res)=>{
-    try{
-      let seriesId = req.body.seriesId
-      let seriesName = req.body.seriesName
-      if(!seriesId){
-        return res.status(400).json({message:"Series Id not present.",type:'error'})
-      }
-      if(!seriesName){
-        return res.status(400).json({message:"Please enter series name",type:"error"})
-      }
-      let isSeriesExist = await hrQuestionsSeriesModel.findOne({_id:seriesId})
-      if(!isSeriesExist){
-        return res.status(400).json({message:"Series not present.",type:"error"})
-      }
-      await hrQuestionsSeriesModel.findOneAndUpdate({_id:seriesId},{
-        $set:{
-            questionSeries:seriesName
+exports.deleteHrRoundSeries = async (req, res) => {
+    try {
+        let SeriesId = req.body.SeriesId;
+        if (!SeriesId) {
+            return res.status(400).json({ message: "Series Id not present.", type: "error" })
         }
-      })
-      return res.status(200).json({message:"Document updated successfully.",type:'success'})
-    }catch(error){
-        console.log("ERROR::",error)
-        return res.status(500).json({message:"Internal Server Error",type:"error",error:error.message})
+        let isSeriesExist = await hrQuestionsSeriesModel.findOne({ _id: SeriesId })
+        if (!isSeriesExist) {
+            return res.status(400).json({ message: "Series doesn't exist with this id", type: "error" })
+        }
+        await HrQuestionsModel.findOneAndDelete({ questionSeriesId: SeriesId })
+        await hrQuestionsSeriesModel.findOneAndDelete({ _id: SeriesId })
+
+        return res.status(200).json({ message: isSeriesExist.questionSeries + " series deleted successfully", type: "success" })
+    } catch (error) {
+        console.log("ERROR::", error)
+        return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
+    }
+}
+
+
+exports.updateHrRoundSeries = async (req, res) => {
+    try {
+        let seriesId = req.body.seriesId
+        let seriesName = req.body.seriesName
+        if (!seriesId) {
+            return res.status(400).json({ message: "Series Id not present.", type: 'error' })
+        }
+        if (!seriesName) {
+            return res.status(400).json({ message: "Please enter series name", type: "error" })
+        }
+        let isSeriesExist = await hrQuestionsSeriesModel.findOne({ _id: seriesId })
+        if (!isSeriesExist) {
+            return res.status(400).json({ message: "Series not present.", type: "error" })
+        }
+        await hrQuestionsSeriesModel.findOneAndUpdate({ _id: seriesId }, {
+            $set: {
+                questionSeries: seriesName
+            }
+        })
+        return res.status(200).json({ message: "Document updated successfully.", type: 'success' })
+    } catch (error) {
+        console.log("ERROR::", error)
+        return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
     }
 }
 
@@ -102,9 +103,10 @@ exports.addQuestion = async (req, res) => {
         } else {
             await HrQuestionsModel.findOneAndUpdate({ questionSeriesId: questionSeriesId }, {
                 $push: {
-                    questions: {question:question}
-                  }
-        })}
+                    questions: question
+                }
+            })
+        }
         return res.status(200).json({ message: "Question added successfully.", type: "success" })
 
     } catch (error) {
@@ -114,28 +116,84 @@ exports.addQuestion = async (req, res) => {
 }
 
 
-exports.updateQuesiton = async(req,res)=>{
-    try{
-      let questionSeriesId = req.body.questionSeriesId
-      let questionId = req.body.questionId;
-      if(!questionSeriesId){
-        return res.status(400).json({message:"Question Series Id not present.",type:'error'})
-      }
-      if(!questionId){
-        return res.status(400).json({message:"question id not present.",type:'error'})
-      } 
-      let isQuestionSeriesExist = await hrQuestionsSeriesModel.findOne({_id:questionSeriesId})
-      if(!isQuestionSeriesExist){
-        return res.status(400).json({message:"Question series not exist with this id",type:'error'})
-      }
-      let isSeriesExistInQuesions = await HrQuestionsModel.findOne({questionSeriesId:questionSeriesId})
-      if(!isSeriesExistInQuesions){
-        return res.status(400).json({message:"Question series not exist in hrQuesionModel",type:'error'})
-      }
-      await hrQuestionsSeriesModel.findOneAndUpdate({})
-    }catch(error){
-        console.log("ERROR::",error)
-        return res.status(500).json({message:"Internal Server Error",type:'error',error:error.message})
+exports.getHrRoundQuestions = async (req, res) => {
+    try {
+        let seriesId = req.query.seriesId
+        if (!seriesId) {
+            return res.status(400).json({ message: "Series Id not present.", type: "error" })
+        }
+        let isSeriesExist = await hrQuestionsSeriesModel.findOne({ _id: seriesId })
+        if (!isSeriesExist) {
+            return res.status(400).json({ message: "Series doesn't exist.", type: 'error' })
+        }
+        var questions = await HrQuestionsModel.findOne({ questionSeriesId: seriesId })
+
+        return res.status(200).json({ series: isSeriesExist.questionSeries, questions, type: 'success' })
+    } catch (error) {
+        console.log('ERROR::', error)
+        return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
+    }
+}
+
+
+exports.updateQuesiton = async (req, res) => {
+    try {
+        let questionSeriesId = req.body.questionSeriesId
+        let questionId = req.body.questionId
+        let question = req.body.question
+        if (!questionSeriesId) {
+            return res.status(400).json({ message: "Question series Id not present.", type: 'error' })
+        }
+        if (!question) {
+            return res.status(400).json({ message: "Please enter question.", type: "error" })
+        }
+        if (!questionId) {
+            return res.status(400).json({ message: "Question Id not present.", type: 'error' })
+        }
+        let isSeriesExist = await hrQuestionsSeriesModel.findOne({ _id: questionSeriesId })
+        if (!isSeriesExist) {
+            return res.status(400).json({ message: "Series dosen't exist.", type: 'error' })
+        }
+        let isQuestionExistwithSeries = await HrQuestionsModel.findOne({ questionSeriesId: questionSeriesId })
+        if (!isQuestionExistwithSeries) {
+            return res.status(400).json({ message: "Series not found in hr round question model.", type: 'error' })
+        }
+        await HrQuestionsModel.findOneAndUpdate(
+            { questionSeriesId: questionSeriesId, 'questions._id': questionId },
+            { $set: { 'questions.$.question': question } },
+        )
+        return res.status(200).json({ message: "Question updated successfully.", type: 'success' })
+    } catch (error) {
+        console.log("ERROR::", error)
+        return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
+    }
+}
+
+
+
+exports.deleteHrRoundQuestion = async (req, res) => {
+    try {
+        let seriesId = req.body.seriesId;
+        let questionId = req.body.questionId;
+        if (!seriesId) {
+            return res.status(400).json({ message: "Series Id not present.", type: 'error' })
+        }
+        if (!questionId) {
+            return res.status(400).json({ message: "Question id not present.", type: "error" })
+        }
+        let isSeriesExist = await hrQuestionsSeriesModel.findOne({ _id: seriesId })
+        if (!isSeriesExist) {
+            return res.status(400).json({ message: "Series dosen't exist.", type: "error" })
+        }
+        await HrQuestionsModel.findOneAndUpdate(
+            { questionSeriesId: seriesId },
+            { $pull: { questions: { _id: questionId } } },
+            { new: true }
+        )
+        return res.status(200).json({ message: "Selected question deleted successfully.", type: 'success' })
+    } catch (error) {
+        console.log("ERROR::", error)
+        return res.status(400).json({ message: "Internal Server Error.", type: 'error', error: error.message })
     }
 }
 
@@ -210,3 +268,5 @@ exports.sendHrRoundQuesAns = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error", error: "error", error: error.message })
     }
 }
+
+

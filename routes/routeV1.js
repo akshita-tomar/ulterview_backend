@@ -75,13 +75,17 @@ router.post('/addCheckedSheet',auth,candidate.addCheckedSheet)
 // router.get('/get-checked-sheet',auth,candidate.getCheckedSheet)
 
 
-// HR round 
+// HR round series
 router.post("/addQuestionSeries",auth,HR.addQuestionSeries)
 router.get('/getHrRoundSeries',auth,HR.getHrRoundSeries)
 router.delete('/deleteHrRoundSeries',auth,HR.deleteHrRoundSeries)
 router.put('/updateHrRoundSeries',auth,HR.updateHrRoundSeries)
+
+//HR round questions
 router.post("/addQuestion",auth,HR.addQuestion)
+router.get("/getHrRoundQuestions",auth,HR.getHrRoundQuestions)
 router.put("/updateQuesiton",auth,HR.updateQuesiton)
+router.delete("/deleteHrRoundQuestion",auth,HR.deleteHrRoundQuestion)
 router.post('/sendHrRoundQuesAns',auth,HR.sendHrRoundQuesAns)
 
 
