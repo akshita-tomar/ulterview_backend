@@ -352,11 +352,16 @@ exports.handleResendLink = async (req,res)=>{
    if(!checkCandidateInterview){
     return res.status(400).json({message:"Interview doesn't exist with this cadidate",type:"error"})
    }
-
-
    await candidateModel.findOneAndUpdate({_id:candidateId},{
     resultStatus:'pending',
-    testStatus:'pending'
+    testStatus:'pending',
+    hrRoundStatus:'pending'
+   })
+   await interviewsModal.findOneAndUpdate({candidateId:candidateId},{
+    $set:{
+      linkClickedCount:0,
+      hrRoundLinkClickedCount:0
+    }
    })
    io.emit('interview_result_submitted')  
    return res.status(200).json({message:"State updated successfully.",type:'success'})

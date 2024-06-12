@@ -12,7 +12,11 @@ let interviewSchema = new mongoose.Schema({
     checkedAnswerSheet:{type:Object,default:null},
     checkedBy:{type:String,default:null},
     linkClickedCount:{type:Number,default:0},
-    hrRoundQuesAns:{type:Object,default:null}
+    hrRoundQuesAns:{type:Object,default:null},
+    hrRoundAnswers:{type:Object,default:null},
+    hrRoundStartAt:{type:Date,default:null},
+    hrROundEndAt:{type:Date,default:null},
+    hrRoundLinkClickedCount :{ type:Number,default:0}
 },{timestamps:true})
 
 let interviewsModal = mongoose.model('Interview',interviewSchema)

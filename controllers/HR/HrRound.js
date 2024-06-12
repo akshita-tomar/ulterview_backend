@@ -3,6 +3,8 @@ let candidateModel = require('../../model/candidate')
 let nodemailer = require('nodemailer')
 let HrQuestionsModel = require('../../model/hrQuestions')
 let hrQuestionsSeriesModel = require("../../model/hrQuestionSeries")
+const seriesModel = require('../../model/series')
+let { io } = require('../../index')
 
 
 require('dotenv').config()
@@ -27,7 +29,31 @@ exports.addQuestionSeries = async (req, res) => {
 
 exports.getHrRoundSeries = async (req, res) => {
     try {
-        let allSeries = await hrQuestionsSeriesModel.find()
+
+        let allSeries = await hrQuestionsSeriesModel.aggregate([
+            {
+                $lookup:{
+                    from:'hr-round-questions',
+                    localField:'_id',
+                    foreignField:'questionSeriesId',
+                    as:'details'
+                }
+            },
+            {
+                $addFields:{
+                    questions: { $arrayElemAt: ['$details.questions', 0] },
+                }
+            },
+            {
+                $project:{
+                    _id:1,
+                    questionSeries:1,
+                    questions:1
+                }
+            }
+        ])
+        // return res.send(data)
+        // let allSeries = await hrQuestionsSeriesModel.find()
         return res.status(200).json({ allSeries, type: "success" })
     } catch (error) {
         console.log("ERROR::", error)
@@ -198,21 +224,29 @@ exports.deleteHrRoundQuestion = async (req, res) => {
 }
 
 
-exports.sendHrRoundQuesAns = async (req, res) => {
+exports.sendHrRoundQuesAnsLink = async (req, res) => {
     try {
         let candidateId = req.body.candidateId;
-        let hrRoundQuesAns = req.body.hrRoundQuesAns;
+        let seriesId = req.body.seriesId;
         let link = req.body.link
 
         if (!candidateId) {
             return res.status(400).json({ message: "CandidateId not present.", type: 'error' })
         }
-        if (!hrRoundQuesAns) {
-            return res.status(400).json({ message: 'HR round questions are not present.', type: 'error' })
+        if (!seriesId) {
+            return res.status(400).json({ message: "Series Id not present.", type: "error" })
         }
         let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
         if (!isCandidateExist) {
             return res.status(400).json({ message: "Candidate not found.", type: "error" })
+        }
+        let isSeriesExist = await hrQuestionsSeriesModel.findOne({ _id: seriesId })
+        if (!isSeriesExist) {
+            return res.status(400).json({ message: "Series doesn't exist.", type: "error" })
+        }
+        let hrRoundQuestions = await HrQuestionsModel.findOne({ questionSeriesId: seriesId })
+        if (!hrRoundQuestions) {
+            return res.status(400).json({ message: "Hr round questions doesn't exist with this series.", type: "error" })
         }
         if (!link) {
             return res.status(400).json({ message: "link not present.", tuye: "error" })
@@ -244,7 +278,7 @@ exports.sendHrRoundQuesAns = async (req, res) => {
             })
         let isCandidateInterviewExist = await interviewsModal.findOne({ candidateId: candidateId })
         if (!isCandidateInterviewExist) {
-            await interviewsModal.create({ hrRoundQuesAns: hrRoundQuesAns })
+            await interviewsModal.create({ candidateId: candidateId, hrRoundQuesAns: hrRoundQuestions.questions })
             await candidateModel.findOneAndUpdate({ _id: candidateId }, {
                 $set: {
                     hrRoundStatus: "invite_sent"
@@ -253,7 +287,17 @@ exports.sendHrRoundQuesAns = async (req, res) => {
         } else {
             await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
                 $set: {
-                    hrRoundQuesAns: hrRoundQuesAns
+                    hrRoundLinkClickedCount: 0
+                }
+            })
+            await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+                $set: {
+                    hrRoundStatus: "pending"
+                }
+            })
+            await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+                $set: {
+                    hrRoundQuesAns: hrRoundQuestions.questions
                 }
             })
             await candidateModel.findOneAndUpdate({ _id: candidateId }, {
@@ -270,3 +314,192 @@ exports.sendHrRoundQuesAns = async (req, res) => {
 }
 
 
+
+
+exports.startHrRound = async (req, res) => {
+    try {
+        const candidateId = req.body.candidateId;
+        if (!candidateId) {
+            return res.status(400).json({ message: "Candidate Id not present.", type: "error" })
+        }
+
+        let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+        if (!isCandidateExist) {
+            return res.status(400).json({ message: "Candidate doesn't exist.", type: "error" })
+        }
+        let isCandidateExistInterview = await interviewsModal.findOne({ candidateId: candidateId })
+        if (!isCandidateExistInterview) {
+            return res.status(400).json({ message: "Candidate Interview do not exist,", type: "error" })
+        }
+        await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+            $set: {
+                hrRoundStartAt: Date.now(),
+                hrRoundLinkClickedCount: isCandidateExistInterview.hrRoundLinkClickedCount + 1
+            }
+        })
+        await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+            $set: {
+                hrRoundStatus: 'invite_accepted'
+            }
+        })
+        io.emit('Interview_submitted')
+        return res.status(200).json({ message: "Hr round started.", type: "success" })
+    } catch (error) {
+        console.log("ERROR::", error)
+        return res.status(500).json({ message: "Internal Server Error.", type: "error", error: error.message })
+    }
+}
+
+
+exports.getHrRoundInterviewQues = async (req, res) => {
+    try {
+        let candidateId = req.query.candidateId;
+        if (!candidateId) {
+            return res.status(400).json({ message: 'Candidate Id not present.', type: "error" })
+        }
+        let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+        if (!isCandidateExist) {
+            return res.status(400).json({ message: "Candidate doesn't exist with this candidateId", type: 'error' })
+        }
+        let isCadidateInterviewExist = await interviewsModal.findOne({ candidateId: candidateId })
+        if (!isCadidateInterviewExist) {
+            return res.status(400).json({ message: "Candidate's Interview doesn't exist.", type: "error" })
+        }
+        let questions = isCadidateInterviewExist.hrRoundQuesAns
+        return res.status(200).json({ questions, type: "success" })
+    } catch (error) {
+        console.log("ERROR::", error)
+        return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message })
+    }
+}
+
+
+
+exports.addHrRoundCandidateAnswer = async (req, res) => {
+    try {
+        let candidateId = req.body.candidateId;
+        let answers = req.body.answers;
+
+        if (!candidateId) {
+            return res.status(400).json({ message: "Candidate Id not present.", type: "error" })
+        }
+        if (!answers) {
+            return res.status(400).json({ message: "Answers not present.", type: 'error' })
+        }
+        let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+        if (!isCandidateExist) {
+            return res.status(400).json({ message: "Candidate doesn't exist.", type: "error" })
+        }
+        let isCandidateInterviewExist = await interviewsModal.findOne({ candidateId: candidateId })
+        if (!isCandidateInterviewExist) {
+            return res.status(400).json({ message: "Candidate interview doesn't exist.", type: 'error' })
+        }
+        await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+            $set: {
+                hrRoundAnswers: answers,
+                hrROundEndAt: Date.now(),
+                hrRoundLinkClicked: isCandidateInterviewExist.hrRoundLinkClicked,
+            }
+        })
+        await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+            $set: {
+                hrRoundStatus: 'completed'
+            }
+        })
+        io.emit('Interview_submitted')
+        return res.status(200).json({ message: "Interview completed!", type: "success" })
+    } catch (error) {
+        console.log('ERROR::', error)
+        return res.status(500).json({ message: "Internal Server Error.", type: "error", error: error.message })
+    }
+}
+
+
+
+exports.getTestDetails = async (req, res) => {
+    try {
+        let candidateId = req.query.candidateId
+        if (!candidateId) {
+            return res.status(400).json({ message: "candidateId not present.", type: 'error' })
+        }
+        let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+        if (!isCandidateExist) {
+            return res.status(400).json({ message: "Candidate dosen't exist.", type: 'error' })
+        }
+        let interview = await interviewsModal.findOne({ candidateId: candidateId })
+        return res.status(200).json({ linkedClickedCount: interview.hrRoundLinkClickedCount, testStatus: isCandidateExist.hrRoundStatus, type: 'success' })
+    } catch (error) {
+        console.log("ERROR::", error)
+        return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
+    }
+}
+
+
+exports.HrRoundTestCompletd = async (req, res) => {
+    try {
+        const selectedKeys = ['username', 'experience', 'profile', 'hrRoundStatus']
+        let testCompletedBy = await candidateModel.find({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } }).sort({ updatedAt: -1 }).select(selectedKeys.join(' ')).lean().exec();
+
+        return res.status(200).json({ testCompletedBy, type: 'success' })
+    } catch (error) {
+        console.log('ERROR::', error)
+        return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message })
+    }
+}
+
+
+
+
+exports.hrRoundCandidateAnswers = async (req, res) => {
+    try {
+        let candidateId = req.query.candidateId
+        if (!candidateId) {
+            return res.status(400).json({ message: "Candidate Id not present.", type: "error" })
+        }
+        let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+        if (!isCandidateExist) {
+            return res.status(400).json({ message: "Candidate doesn't exist", type: 'error' })
+        }
+        let interviewAnswers = await interviewsModal.findOne({ candidateId: candidateId })
+
+        let answers = interviewAnswers.hrRoundAnswers.hrRoundAnswers
+        let questions = interviewAnswers.hrRoundQuesAns
+        return res.status(200).json({ answers, questions, type: 'success' })
+    } catch (error) {
+        console.log('ERROR::', error)
+        return res.status(500).json({ message: "Internal server error", type: 'error', error: error.message })
+    }
+}
+
+
+
+exports.hrRoundSelectReject = async (req, res) => {
+    try {
+        let candidateId = req.body.candidateId
+        let hrResponse = req.body.hrResponse;
+          
+        if(!candidateId){
+            return res.status(400).json({message:"Candidate Id not present.",type:'error'})
+        }
+        if (!hrResponse) {
+            return res.status(400).json({ message: "Hr response not present", type: 'error' })
+        }
+        if (!(hrResponse === 'selected' || hrResponse === "rejected")) {
+            return res.status(400).json({ message: 'Response must be the strings selected or rejected', type: 'error' })
+        }
+        let isCandidateExist = await candidateModel.findOne({_id:candidateId}) 
+        if(!isCandidateExist){
+            return res.status(400).json({message:"Candidate doesn't exist.",type:"error"})
+        }
+        await candidateModel.findOneAndUpdate({_id:candidateId},{
+            $set:{
+                hrRoundStatus:hrResponse
+            }
+        })
+        io.emit('Interview_submitted')
+        return res.status(200).json({message:"Candidate has been "+ hrResponse,type:'success'})
+    } catch (error) {
+        console.log('ERROR::',error)
+        return res.status(500).json({ message: "Internal Server Error" ,type:'error',error:error.message})
+    }
+}

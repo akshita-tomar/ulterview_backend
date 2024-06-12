@@ -86,8 +86,17 @@ router.post("/addQuestion",auth,HR.addQuestion)
 router.get("/getHrRoundQuestions",auth,HR.getHrRoundQuestions)
 router.put("/updateQuesiton",auth,HR.updateQuesiton)
 router.delete("/deleteHrRoundQuestion",auth,HR.deleteHrRoundQuestion)
-router.post('/sendHrRoundQuesAns',auth,HR.sendHrRoundQuesAns)
 
+
+//HR round interview
+router.post('/sendHrRoundQuesAns',auth,HR.sendHrRoundQuesAnsLink)
+router.post('/startHrRound',HR.startHrRound)
+router.get('/getHrRoundInterviewQues',HR.getHrRoundInterviewQues)
+router.post('/addHrRoundCandidateAnswer',HR.addHrRoundCandidateAnswer)
+router.get('/getTestDetails',HR.getTestDetails)
+router.get('/HrRoundTestCompletd',auth,HR.HrRoundTestCompletd)
+router.get('/hrRoundCandidateAnswers',auth,HR.hrRoundCandidateAnswers)
+router.post('/hrRoundSelectReject',auth,HR.hrRoundSelectReject)
 
 
 

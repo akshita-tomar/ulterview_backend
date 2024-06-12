@@ -9,7 +9,7 @@ let candidateSchema = new mongoose.Schema({
     acceptRejectReason:{type:String,default:null},
     languageId:{type:mongoose.Types.ObjectId},
     seriesId:{type:mongoose.Types.ObjectId},
-    hrRoundStatus:{type:String,emun:["invite_sent","accepted","completed","selected","rejected","pending"],default:'pending'}
+    hrRoundStatus:{type:String,emun:["invite_sent","invite_accepted","completed","selected","rejected","pending"],default:'pending'}
 },{timestamps:true})
 let candidateModel = mongoose.model('candidate',candidateSchema)
 module.exports = candidateModel;
