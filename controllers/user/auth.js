@@ -140,21 +140,59 @@ exports.signIn = async (req, res) => {
 
 
 
+// exports.getHRorDeveloperDetails = async (req, res) => {
+//   try {
+//     var role = req.query.role;
+//     let selectedKeys = ['userName', 'email', 'profile', 'experience',"role"]
+//     if (!role) {
+//       return res.status(400).json({ message: "Role not present.", type: "error" })
+//     }
+//     role = role.toUpperCase()
+//     let details = await userModel.find({ role: role }).select(selectedKeys.join(' ')).lean().exec();
+//     return res.status(200).json({ details, type: "success" })
+//   } catch (error) {
+//     console.log("ERROR::", error)
+//     return res.status(500).json({ message: "Internal server error.", type: "error", error: error.message })
+//   }
+// }
+
+
 exports.getHRorDeveloperDetails = async (req, res) => {
   try {
     var role = req.query.role;
-    let selectedKeys = ['userName', 'email', 'profile', 'experience',"role"]
+    const { page = 1, limit = 10 } = req.query; 
+    let selectedKeys = ['userName', 'email', 'profile', 'experience', 'role']
     if (!role) {
       return res.status(400).json({ message: "Role not present.", type: "error" })
     }
     role = role.toUpperCase()
-    let details = await userModel.find({ role: role }).select(selectedKeys.join(' ')).lean().exec();
-    return res.status(200).json({ details, type: "success" })
+
+    let details = await userModel
+      .find({ role: role })
+      .sort({ _id: -1 }) 
+      .select(selectedKeys.join(' '))
+      .skip((page - 1) * limit) 
+      .limit(Number(limit)) 
+      .lean()
+      .exec();
+
+    const totalDetails = await userModel.countDocuments({ role: role }); 
+
+    return res.status(200).json({
+      details,
+      totalDetails,
+      totalPages: Math.ceil(totalDetails / limit),
+      currentPage: Number(page),
+      type: "success"
+    });
   } catch (error) {
     console.log("ERROR::", error)
-    return res.status(500).json({ message: "Internal server error.", type: "error", error: error.message })
-  }
+    return res.status(500).json({message:"Internal Server error.",type:'error',error:error.message})
+   }
 }
+
+
+
 
 
 

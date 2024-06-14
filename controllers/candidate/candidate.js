@@ -63,15 +63,42 @@ exports.registerCandidate = async (req, res) => {
 
 
 
+// exports.getCandidates = async (req, res) => {
+//   try {
+//     var allCandidates = await candidateModel.find()
+//     allCandidates = await allCandidates.reverse()
+//     return res.status(200).json({ allCandidates, type: 'success' })
+//   } catch (error) {
+//     return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
+//   }
+// }
+
+
 exports.getCandidates = async (req, res) => {
   try {
-    var allCandidates = await candidateModel.find()
-    allCandidates = await allCandidates.reverse()
-    return res.status(200).json({ allCandidates, type: 'success' })
+    const { page = 1, limit = 10 } = req.query;
+
+    const allCandidates = await candidateModel
+      .find()
+      .sort({ _id: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const totalCandidates = await candidateModel.countDocuments();
+
+    return res.status(200).json({
+      allCandidates,
+      totalCandidates,
+      totalPages: Math.ceil(totalCandidates / limit),
+      currentPage: Number(page),
+      type: 'success',
+    });
   } catch (error) {
-    return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
+    console.log('ERROR::', error)
+    return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
   }
-}
+};
+
 
 
 exports.getSingleCandidate = async (req, res) => {
@@ -276,8 +303,7 @@ exports.getInterviewQuestions = async (req, res) => {
     let questions = candidate.providedQuesAns
     let linkClickedCount = candidate.linkClickedCount
     let completedStatus = isCandidateExist.testStatus
-    return res.status(200).json({ time, completedStatus, questions,linkClickedCount, type: "success" })
-
+    return res.status(200).json({ time, completedStatus, questions, linkClickedCount, type: "success" })
   } catch (error) {
     console.log('ERROR::', error)
     return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
@@ -338,34 +364,34 @@ exports.sendLinkViaEmail = async (req, res) => {
 
 
 
-exports.handleResendLink = async (req,res)=>{
-  try{
-   let candidateId = req.body.candidateId;
-   if(!candidateId){
-    return res.status(400).json({message:"Candidate Id not present.",type:'error'})
-   }
-   let isCandidateExist = await candidateModel.findOne({_id:candidateId})
-   if(!isCandidateExist){
-    return res.status(400).json({message:"Candidate doesn't exist.", type:'error'})
-   }
-   let checkCandidateInterview = await interviewsModal.findOne({candidateId:candidateId})
-   if(!checkCandidateInterview){
-    return res.status(400).json({message:"Interview doesn't exist with this cadidate",type:"error"})
-   }
-   await candidateModel.findOneAndUpdate({_id:candidateId},{
-    resultStatus:'pending',
-    testStatus:'pending',
-    hrRoundStatus:'pending'
-   })
-   await interviewsModal.findOneAndUpdate({candidateId:candidateId},{
-    $set:{
-      linkClickedCount:0,
-      hrRoundLinkClickedCount:0
+exports.handleResendLink = async (req, res) => {
+  try {
+    let candidateId = req.body.candidateId;
+    if (!candidateId) {
+      return res.status(400).json({ message: "Candidate Id not present.", type: 'error' })
     }
-   })
-   io.emit('interview_result_submitted')  
-   return res.status(200).json({message:"State updated successfully.",type:'success'})
-  }catch (error) {
+    let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+    if (!isCandidateExist) {
+      return res.status(400).json({ message: "Candidate doesn't exist.", type: 'error' })
+    }
+    let checkCandidateInterview = await interviewsModal.findOne({ candidateId: candidateId })
+    if (!checkCandidateInterview) {
+      return res.status(400).json({ message: "Interview doesn't exist with this cadidate", type: "error" })
+    }
+    await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+      resultStatus: 'pending',
+      testStatus: 'pending',
+      hrRoundStatus: 'pending'
+    })
+    await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+      $set: {
+        linkClickedCount: 0,
+        hrRoundLinkClickedCount: 0
+      }
+    })
+    io.emit('interview_result_submitted')
+    return res.status(200).json({ message: "State updated successfully.", type: 'success' })
+  } catch (error) {
     console.log('ERROR::', error)
     return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
   }
@@ -387,18 +413,18 @@ exports.inviteAccepted = async (req, res) => {
         testStatus: 'invite_accepted'
       }
     })
-    let interview = await interviewsModal.findOne({candidateId: candidateId})
+    let interview = await interviewsModal.findOne({ candidateId: candidateId })
     console.log(interview.linkClickedCount)
-     await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+    await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
       $set: {
         testStartedAt: new Date(),
-        linkClickedCount:interview.linkClickedCount + 1
+        linkClickedCount: interview.linkClickedCount + 1
       }
     })
-    let updatedInterview = await interviewsModal.findOne({candidateId: candidateId})
+    let updatedInterview = await interviewsModal.findOne({ candidateId: candidateId })
     let linkClickedCount = updatedInterview.linkClickedCount
     io.emit('Interview_submitted')
-    return res.status(200).json({ message: 'Invite accepted',linkClickedCount, type: "success" })
+    return res.status(200).json({ message: 'Invite accepted', linkClickedCount, type: "success" })
   } catch (error) {
     console.log("ERROR::", error)
     return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
@@ -463,11 +489,11 @@ exports.addCandidateAnswers = async (req, res) => {
     await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
       $set: {
         retrivedQuesAns: quesAns,
-        testEndedAt :endTime,
-        linkClickedCount:0
+        testEndedAt: endTime,
+        linkClickedCount: 0
       }
     })
-    
+
     if (checkSubmittedAnsLength < 1) {
       await candidateModel.findOneAndUpdate({ _id: candidateId }, {
         $set: {
@@ -475,18 +501,18 @@ exports.addCandidateAnswers = async (req, res) => {
           resultStatus: 'rejected'
         }
       })
-      await interviewsModal.findOneAndUpdate({candidateId: candidateId },{
-        $set:{
-          checkedBy:null,
-          totalCorrectQuestions:0,
-          checkedAnswerSheet:null
+      await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
+        $set: {
+          checkedBy: null,
+          totalCorrectQuestions: 0,
+          checkedAnswerSheet: null
         }
       })
     } else {
       await candidateModel.findOneAndUpdate({ _id: candidateId }, {
         $set: {
           testStatus: 'completed',
-          resultStatus:'pending'
+          resultStatus: 'pending'
         }
       })
     }
@@ -497,7 +523,8 @@ exports.addCandidateAnswers = async (req, res) => {
   } catch (error) {
     console.log("ERROR::", error)
     return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
-  }}
+  }
+}
 
 
 
@@ -506,7 +533,7 @@ exports.getCandidatebyLanguage = async (req, res) => {
     let languageId = req.query.languageId;
     var candidates
     if (!languageId) {
-      candidates = await candidateModel.find({ testStatus: 'completed' }).sort({updatedAt: -1})
+      candidates = await candidateModel.find({ testStatus: 'completed' }).sort({ updatedAt: -1 })
     } else {
       let isLanguageExist = await languagesModel.findOne({ _id: languageId })
       if (!isLanguageExist) {
@@ -514,13 +541,42 @@ exports.getCandidatebyLanguage = async (req, res) => {
       }
       candidates = await candidateModel.find({ testStatus: 'completed', languageId: languageId })
     }
-    // candidates.reverse()
     return res.status(200).json({ candidates, type: "success" })
   } catch (error) {
     console.log("ERROR::", error)
     return res.status(500).json({ message: "Internal Server Error", type: 'error', type: error.message })
   }
 }
+
+
+// exports.getCandidatebyLanguage = async (req, res) => {
+//   try {
+//     const { page = 1, limit = 10 } = req.body
+//     let languageId = req.query.languageId;
+//     var candidates
+//     var totalCandidates
+
+//     if (!languageId) {
+//       candidates = await candidateModel
+//         .find({ testStatus: 'completed' })
+//         .sort({ updatedAt: -1 })
+//         .skip((page - 1) * limit)
+//         .limit(Number(limit));
+
+//       totalCandidates = await candidateModel
+//     } else {
+//       let isLanguageExist = await languagesModel.findOne({ _id: languageId })
+//       if (!isLanguageExist) {
+//         return res.status(400).json({ message: "Language doesn't exist", type: 'error' })
+//       }
+//       candidates = await candidateModel.find({ testStatus: 'completed', languageId: languageId })
+//     }
+//     return res.status(200).json({ candidates, type: "success" })
+//   } catch (error) {
+//     console.log('ERROR::', error)
+//     return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message })
+//   }
+// }
 
 
 
@@ -553,20 +609,20 @@ exports.addCheckedSheet = async (req, res) => {
     let totalCorrectQuestions = req.body.totalCorrectQuestions;
     let checkedAnswerSheet = req.body.checkedAnswerSheet;
     let checkedBy = req.result.id
-console.log("correct ans----",totalCorrectQuestions)
+    console.log("correct ans----", totalCorrectQuestions)
     if (!candidateId) {
       return res.status(400).json({ message: "Candidate Id not present", type: 'error' })
     }
     if (!totalQuestions) {
       return res.status(400).json({ message: "Total questions not present", type: "error" })
     }
-    if (!totalCorrectQuestions===undefined || totalCorrectQuestions===null) {
+    if (!totalCorrectQuestions === undefined || totalCorrectQuestions === null) {
       return res.status(400).json({ message: "Correct answer not present", type: "error" })
     }
     if (!checkedAnswerSheet) {
       return res.status(400).json({ message: "Checked answersheet not present.", type: "error" })
     }
-    let developer = await userModel.findOne({_id:checkedBy})
+    let developer = await userModel.findOne({ _id: checkedBy })
     let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
     if (!isCandidateExist) {
       return res.status(400).json({ message: "Candidate not exist", type: 'error' })
@@ -576,20 +632,20 @@ console.log("correct ans----",totalCorrectQuestions)
       return res.status(400).json({ message: "Candidate interview not exist.", type: 'error' })
     }
     let testStatus = (totalCorrectQuestions / totalQuestions) * 100
-    
+
     let passedOrFailed
     if (testStatus < 60) {
       passedOrFailed = "rejected"
     } else {
       passedOrFailed = "selected"
     }
-    
+
     await interviewsModal.findOneAndUpdate({ candidateId: candidateId }, {
       $set: {
         totalQuestion: totalQuestions,
         totalCorrectQuestions: totalCorrectQuestions,
         checkedAnswerSheet: checkedAnswerSheet,
-        checkedBy:developer.userName
+        checkedBy: developer.userName
       }
     })
     await candidateModel.findOneAndUpdate({ _id: candidateId }, {

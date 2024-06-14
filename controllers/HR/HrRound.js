@@ -45,6 +45,9 @@ exports.getHrRoundSeries = async (req, res) => {
                 }
             },
             {
+                $sort:{'createdAt':-1}
+            },
+            {
                 $project:{
                     _id:1,
                     questionSeries:1,
@@ -435,12 +438,41 @@ exports.getTestDetails = async (req, res) => {
 }
 
 
+// exports.HrRoundTestCompletd = async (req, res) => {
+//     try {
+//         const selectedKeys = ['username', 'experience', 'profile', 'hrRoundStatus']
+//         let testCompletedBy = await candidateModel.find({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } }).sort({ updatedAt: -1 }).select(selectedKeys.join(' ')).lean().exec();
+
+//         return res.status(200).json({ testCompletedBy, type: 'success' })
+//     } catch (error) {
+//         console.log('ERROR::', error)
+//         return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message })
+//     }
+// }
+
 exports.HrRoundTestCompletd = async (req, res) => {
     try {
-        const selectedKeys = ['username', 'experience', 'profile', 'hrRoundStatus']
-        let testCompletedBy = await candidateModel.find({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } }).sort({ updatedAt: -1 }).select(selectedKeys.join(' ')).lean().exec();
+        const { page = 1, limit = 10 } = req.query;
+        const selectedKeys = ['username', 'experience', 'profile', 'hrRoundStatus'];
+        
+        let testCompletedBy = await candidateModel
+            .find({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } })
+            .sort({ updatedAt: -1 })
+            .select(selectedKeys.join(' '))
+            .skip((page - 1) * limit) 
+            .limit(Number(limit))
+            .lean()
+            .exec();
 
-        return res.status(200).json({ testCompletedBy, type: 'success' })
+        const totalCandidates = await candidateModel.countDocuments({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } }); 
+
+        return res.status(200).json({
+            testCompletedBy,
+            totalCandidates,
+            totalPages: Math.ceil(totalCandidates / limit),
+            currentPage: Number(page),
+            type: 'success'
+        });
     } catch (error) {
         console.log('ERROR::', error)
         return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message })
