@@ -528,42 +528,12 @@ exports.addCandidateAnswers = async (req, res) => {
 
 
 
-exports.getCandidatebyLanguage = async (req, res) => {
-  try {
-    let languageId = req.query.languageId;
-    var candidates
-    if (!languageId) {
-      candidates = await candidateModel.find({ testStatus: 'completed' }).sort({ updatedAt: -1 })
-    } else {
-      let isLanguageExist = await languagesModel.findOne({ _id: languageId })
-      if (!isLanguageExist) {
-        return res.status(400).json({ message: "Language doesn't exist", type: 'error' })
-      }
-      candidates = await candidateModel.find({ testStatus: 'completed', languageId: languageId })
-    }
-    return res.status(200).json({ candidates, type: "success" })
-  } catch (error) {
-    console.log("ERROR::", error)
-    return res.status(500).json({ message: "Internal Server Error", type: 'error', type: error.message })
-  }
-}
-
-
 // exports.getCandidatebyLanguage = async (req, res) => {
 //   try {
-//     const { page = 1, limit = 10 } = req.body
 //     let languageId = req.query.languageId;
 //     var candidates
-//     var totalCandidates
-
 //     if (!languageId) {
-//       candidates = await candidateModel
-//         .find({ testStatus: 'completed' })
-//         .sort({ updatedAt: -1 })
-//         .skip((page - 1) * limit)
-//         .limit(Number(limit));
-
-//       totalCandidates = await candidateModel
+//       candidates = await candidateModel.find({ testStatus: 'completed' }).sort({ updatedAt: -1 })
 //     } else {
 //       let isLanguageExist = await languagesModel.findOne({ _id: languageId })
 //       if (!isLanguageExist) {
@@ -573,10 +543,44 @@ exports.getCandidatebyLanguage = async (req, res) => {
 //     }
 //     return res.status(200).json({ candidates, type: "success" })
 //   } catch (error) {
-//     console.log('ERROR::', error)
-//     return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message })
+//     console.log("ERROR::", error)
+//     return res.status(500).json({ message: "Internal Server Error", type: 'error', type: error.message })
 //   }
 // }
+
+
+exports.getCandidatebyLanguage = async (req, res) => {
+  try {
+    const languageId = req.query.languageId;
+    const page = parseInt(req.query.page) || 1;  
+    const limit = parseInt(req.query.limit) || 10;  
+    const skip = (page - 1) * limit;
+
+    let candidates;
+    if (!languageId) {
+      candidates = await candidateModel.find({ testStatus: 'completed' })
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit);
+    } else {
+      const isLanguageExist = await languagesModel.findOne({ _id: languageId });
+      if (!isLanguageExist) {
+        return res.status(400).json({ message: "Language doesn't exist", type: 'error' });
+      }
+      candidates = await candidateModel.find({ testStatus: 'completed', languageId })
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit);
+    }
+    const totalCount = await candidateModel.countDocuments({ testStatus: 'completed', ...(languageId ? { languageId } : {}) });
+
+    return res.status(200).json({ candidates, totalCount, page, limit, type: "success" });
+  } catch (error) {
+    console.log("ERROR::", error);
+    return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message });
+  }
+};
+
 
 
 
