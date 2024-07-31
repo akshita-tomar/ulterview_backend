@@ -76,7 +76,33 @@ exports.signUp = async (req, res) => {
       to: email,
       subject: 'Ultivic Technologies',
       text: 'Your Credentials',
-      html: "<div> Welcome to Ultivic interview portal. Your login credentials are :  <h4> email : " + email + ", password : " + password + " </h4><br> You can login with these credentials and can change your password</div>"
+      html: `
+      <div style="padding: 20px; font-family: Arial, sans-serif; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden; background-color: #fff;">
+              <div style="background-color: #007bff; color: white; padding: 20px; text-align: center;">
+                  <h2 style="margin: 0;">Welcome to the part of Ultivic team</h2>
+              </div>
+              <div style="padding: 20px;">
+                  <p style="font-size: 16px; line-height: 1.5;">
+                      Hello ,
+                  </p>
+                  <p style="font-size: 16px; line-height: 1.5;">
+                       <strong> ${email}</strong> this is your email .
+                       <strong>${password}</strong> this is your password .
+                  </p>
+                  <p style="font-size: 16px; line-height: 1.5;">
+                      Please keep these credentials safe and you can login to our interview platform through this. If you want to change that password you can do it by the option (change password).
+                  </p>
+                  <p style="font-size: 16px; line-height: 1.5;">
+                      Thank you.
+                  </p>
+              </div>
+              <div style="background-color: #f8f8f8; padding: 10px; text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #888;">&copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.</p>
+              </div>
+          </div>
+      </div>
+  `
     }
     transporter.sendMail(mailDetails,
       (error, data) => {
