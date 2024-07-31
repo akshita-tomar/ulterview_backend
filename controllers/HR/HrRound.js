@@ -32,31 +32,29 @@ exports.getHrRoundSeries = async (req, res) => {
 
         let allSeries = await hrQuestionsSeriesModel.aggregate([
             {
-                $lookup:{
-                    from:'hr-round-questions',
-                    localField:'_id',
-                    foreignField:'questionSeriesId',
-                    as:'details'
+                $lookup: {
+                    from: 'hr-round-questions',
+                    localField: '_id',
+                    foreignField: 'questionSeriesId',
+                    as: 'details'
                 }
             },
             {
-                $addFields:{
+                $addFields: {
                     questions: { $arrayElemAt: ['$details.questions', 0] },
                 }
             },
             {
-                $sort:{'createdAt':-1}
+                $sort: { 'createdAt': -1 }
             },
             {
-                $project:{
-                    _id:1,
-                    questionSeries:1,
-                    questions:1
+                $project: {
+                    _id: 1,
+                    questionSeries: 1,
+                    questions: 1
                 }
             }
         ])
-        // return res.send(data)
-        // let allSeries = await hrQuestionsSeriesModel.find()
         return res.status(200).json({ allSeries, type: "success" })
     } catch (error) {
         console.log("ERROR::", error)
@@ -454,17 +452,17 @@ exports.HrRoundTestCompletd = async (req, res) => {
     try {
         const { page = 1, limit = 10 } = req.query;
         const selectedKeys = ['username', 'experience', 'profile', 'hrRoundStatus'];
-        
+
         let testCompletedBy = await candidateModel
             .find({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } })
             .sort({ updatedAt: -1 })
             .select(selectedKeys.join(' '))
-            .skip((page - 1) * limit) 
+            .skip((page - 1) * limit)
             .limit(Number(limit))
             .lean()
             .exec();
 
-        const totalCandidates = await candidateModel.countDocuments({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } }); 
+        const totalCandidates = await candidateModel.countDocuments({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } });
 
         return res.status(200).json({
             testCompletedBy,
@@ -509,9 +507,9 @@ exports.hrRoundSelectReject = async (req, res) => {
     try {
         let candidateId = req.body.candidateId
         let hrResponse = req.body.hrResponse;
-          
-        if(!candidateId){
-            return res.status(400).json({message:"Candidate Id not present.",type:'error'})
+
+        if (!candidateId) {
+            return res.status(400).json({ message: "Candidate Id not present.", type: 'error' })
         }
         if (!hrResponse) {
             return res.status(400).json({ message: "Hr response not present", type: 'error' })
@@ -519,21 +517,30 @@ exports.hrRoundSelectReject = async (req, res) => {
         if (!(hrResponse === 'selected' || hrResponse === "rejected")) {
             return res.status(400).json({ message: 'Response must be the strings selected or rejected', type: 'error' })
         }
-        let isCandidateExist = await candidateModel.findOne({_id:candidateId}) 
-        if(!isCandidateExist){
-            return res.status(400).json({message:"Candidate doesn't exist.",type:"error"})
+        let isCandidateExist = await candidateModel.findOne({ _id: candidateId })
+        if (!isCandidateExist) {
+            return res.status(400).json({ message: "Candidate doesn't exist.", type: "error" })
         }
-        await candidateModel.findOneAndUpdate({_id:candidateId},{
-            $set:{
-                hrRoundStatus:hrResponse
+        await candidateModel.findOneAndUpdate({ _id: candidateId }, {
+            $set: {
+                hrRoundStatus: hrResponse
             }
         })
         io.emit('Interview_submitted')
-        return res.status(200).json({message:"Candidate has been "+ hrResponse,type:'success'})
+        return res.status(200).json({ message: "Candidate has been " + hrResponse, type: 'success' })
     } catch (error) {
-        console.log('ERROR::',error)
-        return res.status(500).json({ message: "Internal Server Error" ,type:'error',error:error.message})
+        console.log('ERROR::', error)
+        return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
     }
 }
+
+
+
+
+
+
+
+
+
 
 
