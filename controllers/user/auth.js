@@ -80,16 +80,22 @@ exports.signUp = async (req, res) => {
       <div style="padding: 20px; font-family: Arial, sans-serif; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden; background-color: #fff;">
               <div style="background-color: #007bff; color: white; padding: 20px; text-align: center;">
-                  <h2 style="margin: 0;">Welcome to the part of Ultivic team</h2>
+                  <h2 style="margin: 0;">Welcome to the part of Ultivic interview portal.</h2>
               </div>
               <div style="padding: 20px;">
                   <p style="font-size: 16px; line-height: 1.5;">
                       Hello ,
                   </p>
-                  <p style="font-size: 16px; line-height: 1.5;">
-                       <strong> ${email}</strong> this is your email .
-                       <strong>${password}</strong> this is your password .
+                    <p style="font-size: 16px; line-height: 1.5;">
+                      This is the mail from ultivic technologies.Welcome to our interview portal please visit this link http://16.171.41.223/ and login to move forward with us.
                   </p>
+                  <p style="font-size: 16px; line-height: 1.5;">
+                       <strong> ${email}</strong> this is your email. 
+                  </p>
+                   <p style="font-size: 16px; line-height: 1.5;">
+                       <strong>${password}</strong> this is your password.
+                  </p>
+                   
                   <p style="font-size: 16px; line-height: 1.5;">
                       Please keep these credentials safe and you can login to our interview platform through this. If you want to change that password you can do it by the option (change password).
                   </p>
@@ -169,40 +175,71 @@ exports.signIn = async (req, res) => {
 // exports.getHRorDeveloperDetails = async (req, res) => {
 //   try {
 //     var role = req.query.role;
-//     let selectedKeys = ['userName', 'email', 'profile', 'experience',"role"]
+//     let search = req.query.search
+    
+//     const { page = 1, limit = 10 } = req.query; 
+//     let selectedKeys = ['userName', 'email', 'profile', 'experience', 'role']
 //     if (!role) {
 //       return res.status(400).json({ message: "Role not present.", type: "error" })
 //     }
 //     role = role.toUpperCase()
-//     let details = await userModel.find({ role: role }).select(selectedKeys.join(' ')).lean().exec();
-//     return res.status(200).json({ details, type: "success" })
+
+//     let details = await userModel
+//       .find({ role: role })
+//       .sort({ _id: -1 }) 
+//       .select(selectedKeys.join(' '))
+//       .skip((page - 1) * limit) 
+//       .limit(Number(limit)) 
+//       .lean()
+//       .exec();
+
+//     const totalDetails = await userModel.countDocuments({ role: role }); 
+
+//     return res.status(200).json({
+//       details,
+//       totalDetails,
+//       totalPages: Math.ceil(totalDetails / limit),
+//       currentPage: Number(page),
+//       type: "success"
+//     });
 //   } catch (error) {
 //     console.log("ERROR::", error)
-//     return res.status(500).json({ message: "Internal server error.", type: "error", error: error.message })
-//   }
+//     return res.status(500).json({message:"Internal Server error.",type:'error',error:error.message})
+//    }
 // }
-
 
 exports.getHRorDeveloperDetails = async (req, res) => {
   try {
-    var role = req.query.role;
-    const { page = 1, limit = 10 } = req.query; 
-    let selectedKeys = ['userName', 'email', 'profile', 'experience', 'role']
+    let { role, search, page = 1, limit = 10 } = req.query; 
+    const selectedKeys = ['userName', 'email', 'profile', 'experience', 'role'];
+
     if (!role) {
-      return res.status(400).json({ message: "Role not present.", type: "error" })
+      return res.status(400).json({ message: "Role not present.", type: "error" });
     }
-    role = role.toUpperCase()
+
+    role = role.toUpperCase();
+
+    let searchCondition = {};
+
+    if (search) {
+      const searchRegex = new RegExp(search, 'i'); 
+      searchCondition = {
+        $or: selectedKeys.map((key) => ({
+          [key]: searchRegex
+        }))
+      };
+    }
 
     let details = await userModel
-      .find({ role: role })
-      .sort({ _id: -1 }) 
+      .find({ role: role, ...searchCondition })
+      .sort({ _id: -1 })
       .select(selectedKeys.join(' '))
-      .skip((page - 1) * limit) 
-      .limit(Number(limit)) 
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
       .lean()
       .exec();
 
-    const totalDetails = await userModel.countDocuments({ role: role }); 
+    const totalDetails = await userModel.countDocuments({ role: role, ...searchCondition });
 
     return res.status(200).json({
       details,
@@ -212,11 +249,10 @@ exports.getHRorDeveloperDetails = async (req, res) => {
       type: "success"
     });
   } catch (error) {
-    console.log("ERROR::", error)
-    return res.status(500).json({message:"Internal Server error.",type:'error',error:error.message})
-   }
+    console.log("ERROR::", error);
+    return res.status(500).json({ message: "Internal Server error.", type: 'error', error: error.message });
+  }
 }
-
 
 
 

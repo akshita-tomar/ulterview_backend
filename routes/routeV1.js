@@ -48,7 +48,7 @@ router.put('/updateSeries',auth,series.updateSeries)
 router.delete('/deleteSeries',auth,series.deleteSeries)
 router.get('/getAllSeries',auth,series.getAllSeries)
 router.get('/getSeries',auth,series.getSeries)
-router.get('/getAllseriesWithStatus',auth,series.getAllseriesWithStatus)
+router.get('/getAllseriesWithStatus',auth,series.getAllseriesWithStatus) 
 
 //candidate
 router.post('/registerCandidate',auth,candidate.registerCandidate)
@@ -94,7 +94,7 @@ router.post('/startHrRound',HR.startHrRound)
 router.get('/getHrRoundInterviewQues',HR.getHrRoundInterviewQues)
 router.post('/addHrRoundCandidateAnswer',HR.addHrRoundCandidateAnswer)
 router.get('/getTestDetails',HR.getTestDetails)
-router.get('/HrRoundTestCompletd',auth,HR.HrRoundTestCompletd)
+router.post('/HrRoundTestCompletd',auth,HR.HrRoundTestCompletd)
 router.get('/hrRoundCandidateAnswers',auth,HR.hrRoundCandidateAnswers)
 router.post('/hrRoundSelectReject',auth,HR.hrRoundSelectReject)
 

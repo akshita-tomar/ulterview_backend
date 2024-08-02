@@ -63,28 +63,62 @@ exports.registerCandidate = async (req, res) => {
 
 
 
+
 // exports.getCandidates = async (req, res) => {
 //   try {
-//     var allCandidates = await candidateModel.find()
-//     allCandidates = await allCandidates.reverse()
-//     return res.status(200).json({ allCandidates, type: 'success' })
+//     const { page = 1, limit = 10 } = req.query;
+//     const search = req.query.search
+
+//     const allCandidates = await candidateModel
+//       .find()
+//       .sort({ _id: -1 })
+//       .skip((page - 1) * limit)
+//       .limit(Number(limit));
+
+//     const totalCandidates = await candidateModel.countDocuments();
+
+//     return res.status(200).json({
+//       allCandidates,
+//       totalCandidates,
+//       totalPages: Math.ceil(totalCandidates / limit),
+//       currentPage: Number(page),
+//       type: 'success',
+//     });
 //   } catch (error) {
-//     return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message })
+//     console.log('ERROR::', error)
+//     return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
 //   }
-// }
+// };
+
 
 
 exports.getCandidates = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, search = '' } = req.query;
+
+ 
+    const searchQuery = search
+    ? {
+        $or: [
+          { username: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { profile: { $regex: search, $options: 'i' } },
+          { experience: { $regex: search, $options: 'i' } },
+          { hrRoundStatus: { $regex: search, $options: 'i' } },
+          { testStatus: { $regex: search, $options: 'i' } },
+          { resultStatus: { $regex: search, $options: 'i' } }
+        ]
+      }
+    : {};
+  
 
     const allCandidates = await candidateModel
-      .find()
+      .find(searchQuery)
       .sort({ _id: -1 })
       .skip((page - 1) * limit)
       .limit(Number(limit));
 
-    const totalCandidates = await candidateModel.countDocuments();
+    const totalCandidates = await candidateModel.countDocuments(searchQuery);
 
     return res.status(200).json({
       allCandidates,
@@ -94,8 +128,8 @@ exports.getCandidates = async (req, res) => {
       type: 'success',
     });
   } catch (error) {
-    console.log('ERROR::', error)
-    return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
+    console.log('ERROR::', error);
+    return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message });
   }
 };
 

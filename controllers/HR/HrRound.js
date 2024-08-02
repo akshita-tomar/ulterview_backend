@@ -3,7 +3,6 @@ let candidateModel = require('../../model/candidate')
 let nodemailer = require('nodemailer')
 let HrQuestionsModel = require('../../model/hrQuestions')
 let hrQuestionsSeriesModel = require("../../model/hrQuestionSeries")
-const seriesModel = require('../../model/series')
 let { io } = require('../../index')
 
 
@@ -29,7 +28,6 @@ exports.addQuestionSeries = async (req, res) => {
 
 exports.getHrRoundSeries = async (req, res) => {
     try {
-
         let allSeries = await hrQuestionsSeriesModel.aggregate([
             {
                 $lookup: {
@@ -61,6 +59,7 @@ exports.getHrRoundSeries = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
     }
 }
+
 
 
 exports.deleteHrRoundSeries = async (req, res) => {
@@ -436,25 +435,66 @@ exports.getTestDetails = async (req, res) => {
 }
 
 
+
 // exports.HrRoundTestCompletd = async (req, res) => {
 //     try {
-//         const selectedKeys = ['username', 'experience', 'profile', 'hrRoundStatus']
-//         let testCompletedBy = await candidateModel.find({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } }).sort({ updatedAt: -1 }).select(selectedKeys.join(' ')).lean().exec();
+//         const { page = 1, limit = 10 } = req.query;
+//         const search = req.body.search
+//         let status = req.body.status 
+//         const selectedKeys = ['username', 'experience', 'profile', 'hrRoundStatus'];
 
-//         return res.status(200).json({ testCompletedBy, type: 'success' })
+//         let testCompletedBy = await candidateModel
+//             .find({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } })
+//             .sort({ updatedAt: -1 })
+//             .select(selectedKeys.join(' '))
+//             .skip((page - 1) * limit)
+//             .limit(Number(limit))
+//             .lean()
+//             .exec();
+
+//         const totalCandidates = await candidateModel.countDocuments({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } });
+
+//         return res.status(200).json({
+//             testCompletedBy,
+//             totalCandidates,
+//             totalPages: Math.ceil(totalCandidates / limit),
+//             currentPage: Number(page),
+//             type: 'success'
+//         });
 //     } catch (error) {
 //         console.log('ERROR::', error)
 //         return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message })
 //     }
 // }
 
+
 exports.HrRoundTestCompletd = async (req, res) => {
     try {
         const { page = 1, limit = 10 } = req.query;
+        const search = req.body.search;
+        let status = req.body.status;
+
         const selectedKeys = ['username', 'experience', 'profile', 'hrRoundStatus'];
 
+       
+        let query = {
+            hrRoundStatus: { $in: ["completed", "selected", "rejected"] }
+        };
+
+     
+        if (search) {
+            query.$or = selectedKeys.map(key => ({
+                [key]: { $regex: search, $options: 'i' } 
+            }));
+        }
+
+       
+        if (status) {
+            query.hrRoundStatus = status;
+        }
+
         let testCompletedBy = await candidateModel
-            .find({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } })
+            .find(query)
             .sort({ updatedAt: -1 })
             .select(selectedKeys.join(' '))
             .skip((page - 1) * limit)
@@ -462,7 +502,7 @@ exports.HrRoundTestCompletd = async (req, res) => {
             .lean()
             .exec();
 
-        const totalCandidates = await candidateModel.countDocuments({ hrRoundStatus: { $in: ["completed", "selected", "rejected"] } });
+        const totalCandidates = await candidateModel.countDocuments(query);
 
         return res.status(200).json({
             testCompletedBy,
@@ -472,10 +512,10 @@ exports.HrRoundTestCompletd = async (req, res) => {
             type: 'success'
         });
     } catch (error) {
-        console.log('ERROR::', error)
-        return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message })
+        console.log('ERROR::', error);
+        return res.status(500).json({ message: "Internal Server Error.", type: 'error', error: error.message });
     }
-}
+};
 
 
 
