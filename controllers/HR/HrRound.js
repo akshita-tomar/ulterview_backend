@@ -576,7 +576,22 @@ exports.hrRoundSelectReject = async (req, res) => {
 
 
 
+exports.addDeveloperAccount = async(req,res)=>{
+    try{
+   let userId = req.result.userId
+   let username = req.body.username
+   let useremail = req.body.useremail
 
+   if(!username){
+    return res.status(400).json({message:"User name is required.",type:"error"})
+   }
+   if(!useremail){
+    return res.status(400).json({message:"User email is required.",type:'error'})
+   }
+    }catch(error){
+      return res.status(500).json({message:"Internal Server Error.",type:"error",error:error.message})
+    }
+}
 
 
 

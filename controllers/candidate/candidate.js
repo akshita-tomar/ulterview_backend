@@ -92,13 +92,57 @@ exports.registerCandidate = async (req, res) => {
 
 
 
-exports.getCandidates = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, search = '' } = req.query;
+// exports.getCandidates = async (req, res) => {
+//   try {
+//     const { page = 1, limit = 10, search = '',selectedField='',selectedStatus=''} = req.query;
 
  
-    const searchQuery = search
-    ? {
+//     const searchQuery = search
+//     ? {
+//         $or: [
+//           { username: { $regex: search, $options: 'i' } },
+//           { email: { $regex: search, $options: 'i' } },
+//           { profile: { $regex: search, $options: 'i' } },
+//           { experience: { $regex: search, $options: 'i' } },
+//           { hrRoundStatus: { $regex: search, $options: 'i' } },
+//           { testStatus: { $regex: search, $options: 'i' } },
+//           { resultStatus: { $regex: search, $options: 'i' } }
+//         ]
+//       }
+//     : {};
+  
+
+//     const allCandidates = await candidateModel
+//       .find(searchQuery)
+//       .sort({ _id: -1 })
+//       .skip((page - 1) * limit)
+//       .limit(Number(limit));
+
+//     const totalCandidates = await candidateModel.countDocuments(searchQuery);
+
+//     return res.status(200).json({
+//       allCandidates,
+//       totalCandidates,
+//       totalPages: Math.ceil(totalCandidates / limit),
+//       currentPage: Number(page),
+//       type: 'success',
+//     });
+//   } catch (error) {
+//     console.log('ERROR::', error);
+//     return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message });
+//   }
+// };
+
+
+
+exports.getCandidates = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = '', selectedField = '', selectedStatus = '' } = req.query;
+
+    let searchQuery = {};
+
+    if (search) {
+      searchQuery = {
         $or: [
           { username: { $regex: search, $options: 'i' } },
           { email: { $regex: search, $options: 'i' } },
@@ -108,9 +152,25 @@ exports.getCandidates = async (req, res) => {
           { testStatus: { $regex: search, $options: 'i' } },
           { resultStatus: { $regex: search, $options: 'i' } }
         ]
+      };
+    }
+
+    // Apply filtering based on selectedField and selectedStatus
+    if (selectedField && selectedStatus) {
+      switch (selectedField.toLowerCase()) {
+        case 'hr':
+          searchQuery.hrRoundStatus = { $regex: selectedStatus, $options: 'i' };
+          break;
+        case 'technical':
+          searchQuery.testStatus = { $regex: selectedStatus, $options: 'i' };
+          break;
+        case 'final':
+          searchQuery.resultStatus = { $regex: selectedStatus, $options: 'i' };
+          break;
+        default:
+          break;
       }
-    : {};
-  
+    }
 
     const allCandidates = await candidateModel
       .find(searchQuery)
@@ -132,6 +192,13 @@ exports.getCandidates = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message });
   }
 };
+
+
+
+
+
+
+
 
 
 
@@ -564,49 +631,79 @@ exports.addCandidateAnswers = async (req, res) => {
 
 // exports.getCandidatebyLanguage = async (req, res) => {
 //   try {
-//     let languageId = req.query.languageId;
-//     var candidates
+//     const languageId = req.query.languageId;
+//     const page = parseInt(req.query.page) || 1;  
+//     const limit = parseInt(req.query.limit) || 10;  
+//     const skip = (page - 1) * limit;
+
+//     let candidates;
 //     if (!languageId) {
-//       candidates = await candidateModel.find({ testStatus: 'completed' }).sort({ updatedAt: -1 })
+//       candidates = await candidateModel.find({ testStatus: 'completed' })
+//         .sort({ updatedAt: -1 })
+//         .skip(skip)
+//         .limit(limit);
 //     } else {
-//       let isLanguageExist = await languagesModel.findOne({ _id: languageId })
+//       const isLanguageExist = await languagesModel.findOne({ _id: languageId });
 //       if (!isLanguageExist) {
-//         return res.status(400).json({ message: "Language doesn't exist", type: 'error' })
+//         return res.status(400).json({ message: "Language doesn't exist", type: 'error' });
 //       }
-//       candidates = await candidateModel.find({ testStatus: 'completed', languageId: languageId })
+//       candidates = await candidateModel.find({ testStatus: 'completed', languageId })
+//         .sort({ updatedAt: -1 })
+//         .skip(skip)
+//         .limit(limit);
 //     }
-//     return res.status(200).json({ candidates, type: "success" })
+//     const totalCount = await candidateModel.countDocuments({ testStatus: 'completed', ...(languageId ? { languageId } : {}) });
+
+//     return res.status(200).json({ candidates, totalCount, page, limit, type: "success" });
 //   } catch (error) {
-//     console.log("ERROR::", error)
-//     return res.status(500).json({ message: "Internal Server Error", type: 'error', type: error.message })
+//     console.log("ERROR::", error);
+//     return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message });
 //   }
-// }
+// };
+
+
 
 
 exports.getCandidatebyLanguage = async (req, res) => {
   try {
-    const languageId = req.query.languageId;
-    const page = parseInt(req.query.page) || 1;  
-    const limit = parseInt(req.query.limit) || 10;  
+    const { languageId, search } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    let candidates;
-    if (!languageId) {
-      candidates = await candidateModel.find({ testStatus: 'completed' })
-        .sort({ updatedAt: -1 })
-        .skip(skip)
-        .limit(limit);
-    } else {
+
+  
+    let query = { testStatus: 'completed' };
+
+   
+    if (languageId) {
       const isLanguageExist = await languagesModel.findOne({ _id: languageId });
       if (!isLanguageExist) {
         return res.status(400).json({ message: "Language doesn't exist", type: 'error' });
       }
-      candidates = await candidateModel.find({ testStatus: 'completed', languageId })
-        .sort({ updatedAt: -1 })
-        .skip(skip)
-        .limit(limit);
+      query.languageId = languageId;
     }
-    const totalCount = await candidateModel.countDocuments({ testStatus: 'completed', ...(languageId ? { languageId } : {}) });
+
+    
+    if (search) {
+      query.$or = [
+        { username: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { profile: { $regex: search, $options: 'i' } },
+        { experience: { $regex: search, $options: 'i' } },
+        { resultStatus: { $regex: search, $options: 'i' } },
+
+      ];
+    }
+
+   
+    const candidates = await candidateModel.find(query)
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    
+    const totalCount = await candidateModel.countDocuments(query);
 
     return res.status(200).json({ candidates, totalCount, page, limit, type: "success" });
   } catch (error) {
@@ -614,6 +711,7 @@ exports.getCandidatebyLanguage = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error", type: 'error', error: error.message });
   }
 };
+
 
 
 

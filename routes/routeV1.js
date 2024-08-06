@@ -100,7 +100,7 @@ router.post('/hrRoundSelectReject',auth,HR.hrRoundSelectReject)
 
 
 
-
+router.post('/addDeveloperAccount',HR.addDeveloperAccount)
 
 
 
