@@ -17,17 +17,8 @@ exports.addObjective = async (req, res) => {
     let correctAnswer = req.body.correctAnswer;
     let seriesId = req.query.seriesId
 
-    if (!question) {
-      return res.status(400).json({ message: "Please enter question.", type: 'error' });
-    }
     if (options.length < 4) {
       return res.status(400).json({ message: 'Please enter all four options', type: 'error' });
-    }
-    if (!correctAnswer) {
-      return res.status(400).json({ message: "Please enter the correct answer", type: "error" });
-    }
-    if (!seriesId) {
-      return res.status(400).json({ message: "seriesId is not present", type: 'error' })
     }
     let isUserExist = await userModel.findOne({ _id: userId });
 
@@ -84,19 +75,9 @@ exports.addSubjective = async (req, res) => {
     let answer = req.body.answer;
     let seriesId = req.query.seriesId
 
-    if (!question) {
-      return res.status(400).json({ message: "Please enter question.", type: 'error' })
-    }
-    if (!answer) {
-      return res.status(400).json({ message: "Please enter the  answer", type: "error" })
-    }
-
     let isUserExist = await userModel.findOne({ _id: userId })
     if (!isUserExist) {
       return res.status(400).json({ message: "User does not exit.", type: 'error' })
-    }
-    if (!seriesId) {
-      return res.status(400).json({ message: "seriesId is not present", type: 'error' })
     }
     let findLanguage = await languagesModel.findOne({ language: isUserExist.language })
     if (!findLanguage) {
@@ -142,21 +123,10 @@ exports.addLogical = async (req, res) => {
     let answer = req.body.answer;
     let seriesId = req.query.seriesId
 
-    if (!question) {
-      return res.status(400).json({ message: "Please enter question.", type: 'error' })
-    }
-    if (!answer) {
-      return res.status(400).json({ message: "Please enter the  answer", type: "error" })
-    }
-
     let isUserExist = await userModel.findOne({ _id: userId })
     if (!isUserExist) {
       return res.status(400).json({ message: "User does not exit.", type: 'error' })
     }
-    if (!seriesId) {
-      return res.status(400).json({ message: "seriesId is not present", type: 'error' })
-    }
-
     let findLanguage = await languagesModel.findOne({ language: isUserExist.language })
     if (!findLanguage) {
       return res.status(400).json({ message: "Not able to find language.", type: 'error' })
@@ -292,15 +262,6 @@ exports.updateQuestionAnswer = async (req, res) => {
   try {
     const questionType = req.body.questionType;
     const questionId = req.query.questionId;
-
-    if (!questionId) {
-      return res.status(400).json({ message: "Question id not present.", type: "error" });
-    }
-
-    if (!questionType) {
-      return res.status(400).json({ message: "Question type is not present", type: 'error' });
-    }
-
 
     const filter = {};
     filter[`${questionType}._id`] = questionId;
@@ -468,7 +429,6 @@ exports.generateLink = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error", type: 'error' })
   }
 }
-
 
 
 

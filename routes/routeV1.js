@@ -7,20 +7,30 @@ let series = require('../controllers/series/series')
 let auth = require('../middleware/auth')
 let candidate  = require('../controllers/candidate/candidate')
 let HR = require('../controllers/HR/HrRound')
+let {
+    signUpValidator,
+    editUserDetailsValidator,
+    changePasswordValidator,
+    addObjectiveValidator,
+    addSubjectiveValidator,
+    updateQuestionAnswerValidator,
+    createSeriesValidator,
+    updateSeriesValidator
+} = require('../middleware/validation')
 
 //test 
 router.get('/test',user.test)
 
 //auth 
-router.post('/signUp',auth,user.signUp)
+router.post('/signUp',auth,signUpValidator,user.signUp)
 router.post('/signIn',user.signIn)
 
 
 //developer and HR 
 router.get('/get-HR-or-Developer-Details',auth,user.getHRorDeveloperDetails)
 router.delete('/deleteUser',auth,user.deleteUser)
-router.put("/editUserDetails",auth,user.editUserDetails)
-router.put('/changePassword',auth,user.changePassword)
+router.put("/editUserDetails",auth,editUserDetailsValidator,user.editUserDetails)
+router.put('/changePassword',auth,changePasswordValidator,user.changePassword)
 
 //language
 router.post('/selectLanguage',auth,language.selectLanguage)
@@ -31,20 +41,20 @@ router.post('/deleteLanguage',auth,language.deleteLanguage)
 router.put('/updateLanguage',auth,language.updateLanguage)
 
 //questions
-router.post('/addObjective',auth,questions.addObjective)
-router.post('/addSubjective',auth,questions.addSubjective)
-router.post('/addLogical',auth,questions.addLogical)
+router.post('/addObjective',auth,addObjectiveValidator,questions.addObjective)
+router.post('/addSubjective',auth,addSubjectiveValidator,questions.addSubjective)
+router.post('/addLogical',auth,addSubjectiveValidator,questions.addLogical)
 router.get("/getQuestions",auth,questions.getQuestions)
 router.get('/getQuestionsSeriesWise',auth,questions.getQuestionsSeriesWise)
-router.put('/updateQuestionAnswer',auth,questions.updateQuestionAnswer)
-router.delete('/DeleteQuestionAnswer',auth,questions.DeleteQuestionAnswer)
+router.put('/updateQuestionAnswer',auth,updateQuestionAnswerValidator,questions.updateQuestionAnswer)
+router.delete('/DeleteQuestionAnswer',auth,updateQuestionAnswerValidator,questions.DeleteQuestionAnswer)
 router.post('/generateLink',auth,questions.generateLink)
 
 
 
 //series
-router.post('/createSeries',auth,series.createSeries)
-router.put('/updateSeries',auth,series.updateSeries)
+router.post('/createSeries',auth,createSeriesValidator,series.createSeries)
+router.put('/updateSeries',auth,updateSeriesValidator,series.updateSeries)
 router.delete('/deleteSeries',auth,series.deleteSeries)
 router.get('/getAllSeries',auth,series.getAllSeries)
 router.get('/getSeries',auth,series.getSeries)

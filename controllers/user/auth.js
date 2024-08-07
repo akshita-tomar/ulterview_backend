@@ -11,6 +11,7 @@ exports.test = async (req, res) => {
 
 exports.signUp = async (req, res) => {
   try {
+    
     let userName = req.body.userName;
     let email = req.body.email;
     let password = req.body.password;
@@ -18,28 +19,6 @@ exports.signUp = async (req, res) => {
     let experience = req.body.experience;
     let profile = req.body.profile
 
-    let emailFormat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    if (!userName) {
-      return res.status(400).json({ message: "Please enter username.", type: 'error' })
-    }
-    if (!email) {
-      return res.status(400).json({ message: "Please enter email.", type: 'error' })
-    }
-    if (!(emailFormat.test(email))) {
-      return res.status(400).json({ message: "Invalid Email !", type: 'error' })
-    }
-    if (!password) {
-      return res.status(400).json({ message: "Please enter  password.", type: 'error' })
-    }
-    if (!role) {
-      return res.status(400).json({ message: "Please enter role.", type: 'error' })
-    }
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be greater than six characters.", type: 'error' })
-    }
-    if (!experience) {
-      return res.status(400).json({ message: "Please enter experience.", type: "error" })
-    }
     let isEmailExist = await userModel.findOne({ email: email })
     if (isEmailExist) {
       return res.status(400).json({ message: 'This email is already registered. Please try with another email.', type: "error" })
@@ -118,8 +97,6 @@ exports.signUp = async (req, res) => {
           return res.status(200).json({ message: "Registration successfull! Login credentials has been sent to " + userName, type: "success" })
         }
       })
-    // return res.status(200).json({ message: "Registration Successful.", type: 'success' })
-
   } catch (error) {
     console.log("ERROR::", error)
     return res.status(500).json({ message: "Internal Server Error", type: "error", error: error.message })
@@ -287,19 +264,19 @@ exports.editUserDetails = async (req, res) => {
     let profile = req.body.profile;
     let experience = req.body.experience
 
-    if (!userId) {
-      return res.status(400).json({ message: "UserId not found.", type: 'error' })
-    }
-    if (!username) {
-      return res.status(400).json({ message: "Please enter username", type: "error" })
-    }
+    // if (!userId) {
+    //   return res.status(400).json({ message: "UserId not found.", type: 'error' })
+    // }
+    // if (!username) {
+    //   return res.status(400).json({ message: "Please enter username", type: "error" })
+    // }
     let isUserExist = await userModel.findOne({ _id: userId })
     if (!isUserExist) {
       return res.status(400).json({ message: "User data not found.", type: "error" })
     }
-    if (!experience) {
-      return res.status(400).json({ message: "Please enter experience.", type: 'error' })
-    }
+    // if (!experience) {
+    //   return res.status(400).json({ message: "Please enter experience.", type: 'error' })
+    // }
 
     if (isUserExist.role === 'DEVELOPER') {
       if (!profile) {
@@ -328,15 +305,6 @@ exports.changePassword = async (req, res) => {
     let password = req.body.password;
     let confirmPassword = req.body.confirmPassword;
     let newPassword = req.body.newPassword
-    if (!password) {
-      return res.status(400).json({ message: "Enter password", type: "error" })
-    }
-    if (!newPassword) {
-      return res.status(400).json({ message: "Enter new password", type: "error" })
-    }
-    if (!confirmPassword) {
-      return res.status(400).json({ message: "Enter confirmPassword", type: "error" })
-    }
     let userDetails = await userModel.findOne({ _id: userId })
     if (!userDetails) {
       return res.status(400).json({ message: "loggedIn user not found", type: "error" })

@@ -10,15 +10,7 @@ exports.createSeries = async (req, res) => {
         let seriesName = req.body.seriesName;
         let languageId = req.query.languageId
         let taskTime = req.body.taskTime
-        if (!seriesName) {
-            return res.status(400).json({ message: "Please enter series name.", type: "error" })
-        }
-        if(!languageId){
-            return res.status(400).json({message:'Language is not present.',type:'error'})
-        }
-        if(!taskTime){
-            return res.status(400).json({message:'Please enter task time.',type:"error"})
-        }
+
         await seriesModel.create({ seriesName: seriesName,languageId:languageId,taskTime:taskTime })
         return res.status(200).json({ message: "series added successfully", type: "success" })
     } catch (error) {
@@ -35,12 +27,7 @@ exports.updateSeries = async (req, res) => {
         let updatedSeries = req.body.updatedSeries;
         let taskTime = req.body.taskTime
 
-        if (!updateSeriesId) {
-            return res.status(400).json({ message: "Series id not found", type: "error" })
-        }
-        if(!taskTime){
-            return res.status(400).json({message:"Task time is not present.",type:'error'})
-        }
+    
         let isSeriesExist = await seriesModel.findOne({ _id: updateSeriesId })
         if (!isSeriesExist) {
             return res.status(400).json({ messge: "This series is not exist", type: "error" })
