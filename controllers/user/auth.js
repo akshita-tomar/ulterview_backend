@@ -11,7 +11,7 @@ exports.test = async (req, res) => {
 
 exports.signUp = async (req, res) => {
   try {
-    
+
     let userName = req.body.userName;
     let email = req.body.email;
     let password = req.body.password;
@@ -153,7 +153,7 @@ exports.signIn = async (req, res) => {
 //   try {
 //     var role = req.query.role;
 //     let search = req.query.search
-    
+
 //     const { page = 1, limit = 10 } = req.query; 
 //     let selectedKeys = ['userName', 'email', 'profile', 'experience', 'role']
 //     if (!role) {
@@ -187,7 +187,7 @@ exports.signIn = async (req, res) => {
 
 exports.getHRorDeveloperDetails = async (req, res) => {
   try {
-    let { role, search, page = 1, limit = 10 } = req.query; 
+    let { role, search, page = 1, limit = 10 } = req.query;
     const selectedKeys = ['userName', 'email', 'profile', 'experience', 'role'];
 
     if (!role) {
@@ -199,7 +199,7 @@ exports.getHRorDeveloperDetails = async (req, res) => {
     let searchCondition = {};
 
     if (search) {
-      const searchRegex = new RegExp(search, 'i'); 
+      const searchRegex = new RegExp(search, 'i');
       searchCondition = {
         $or: selectedKeys.map((key) => ({
           [key]: searchRegex
